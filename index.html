@@ -78,7 +78,7 @@
         <p id="hebrew-message">הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים.</p>
         <textarea id="answers-input" rows="5" placeholder="Enter possible answers, one per line"></textarea>
         <input type="text" id="question-input" placeholder="What's your question?">
-        <button onclick="askOracleMultipleTimes()">Show The Truth! (9 times)</button>
+        <button onclick="askOracleMultipleTimes()">Show The Truth!</button>
         <p id="loading">Consulting the oracle...</p>
         <p id="error-message"></p>
         <p id="user-question"></p>
@@ -147,13 +147,20 @@
             processLog.textContent = '';
 
             const answerCounts = {};
-            const totalRuns = 9;
+            const baseRuns = 9;
+            const totalRuns = Math.pow(9, Math.ceil(Math.log(answers.length) / Math.log(9)));
 
             try {
                 for (let i = 0; i < totalRuns; i++) {
                     const answer = await askOracle(answers);
                     answerCounts[answer] = (answerCounts[answer] || 0) + 1;
-                    processLog.textContent += `Run ${i + 1}: ${answer}\n`;
+                    
+                    // Only log the process for the first 9 runs
+                    if (i < 9) {
+                        processLog.textContent += `Run ${i + 1}: ${answer}\n`;
+                    } else if (i === 9) {
+                        processLog.textContent += "...\n";
+                    }
                 }
 
                 const mostFrequentAnswer = Object.entries(answerCounts).reduce((a, b) => a[1] > b[1] ? a : b)[0];
@@ -162,6 +169,14 @@
 
                 document.getElementById('user-question').textContent = `Your question: ${userQuestion}`;
                 document.getElementById('result').textContent = `Oracle says (${percentage}% of the time): ${mostFrequentAnswer}`;
+                
+                // Add summary of results
+                processLog.textContent += `\nTotal consultations: ${totalRuns}\n`;
+                processLog.textContent += `Results summary:\n`;
+                for (const [answer, count] of Object.entries(answerCounts)) {
+                    const answerPercentage = ((count / totalRuns) * 100).toFixed(2);
+                    processLog.textContent += `${answer}: ${answerPercentage}%\n`;
+                }
             } catch (error) {
                 console.error('Error in askOracleMultipleTimes:', error);
                 document.getElementById('error-message').textContent = error.message;
