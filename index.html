@@ -124,12 +124,24 @@
             return phrase.split('').reverse().join('');
         }
 
+        function isPrime(num) {
+            for(let i = 2, s = Math.sqrt(num); i <= s; i++)
+                if(num % i === 0) return false; 
+            return num > 1;
+        }
+
+        function getNextPrime(num) {
+            while(!isPrime(num)) {
+                num++;
+            }
+            return num;
+        }
+
         async function askOracle(answers, repetitions) {
             const ancientMessage = document.getElementById('ancient-message').textContent;
             const hebrewMessage = document.getElementById('hebrew-message').textContent;
             const combinedMessage = ancientMessage + ' ' + hebrewMessage;
             
-            // Process the combined message 'repetitions' times
             let processedMessage = combinedMessage;
             for (let i = 0; i < repetitions; i++) {
                 processedMessage = processMagicPhrase(processedMessage);
@@ -164,17 +176,21 @@
             processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
 
             const answerCounts = {};
-            const baseRuns = 9;
-            const multiplier = answers.length * 9;
-            const totalRuns = baseRuns * multiplier;
-            const repetitions = multiplier; // Same as totalRuns / baseRuns
+            let baseRuns = 9;
+            let repetitions = 9;
+
+            if (answers.length > 2) {
+                baseRuns = getNextPrime(9 * answers.length);
+                repetitions = baseRuns;
+            }
+
+            const totalRuns = baseRuns;
 
             try {
                 for (let i = 0; i < totalRuns; i++) {
                     const answer = await askOracle(answers, repetitions);
                     answerCounts[answer] = (answerCounts[answer] || 0) + 1;
                     
-                    // Only log the process for the first 9 runs
                     if (i < 9) {
                         processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
                     } else if (i === 9) {
@@ -189,7 +205,6 @@
                 document.getElementById('user-question').textContent = `Your question: ${userQuestion}`;
                 document.getElementById('result').textContent = `Oracle says (${percentage}% of the time): ${mostFrequentAnswer}`;
                 
-                // Add summary of results
                 processLog.innerHTML += `
                     <div class="summary">
                         <p>Total consultations: ${totalRuns}</p>
