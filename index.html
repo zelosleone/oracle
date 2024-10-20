@@ -62,11 +62,28 @@
         #process-log {
             text-align: left;
             margin-top: 20px;
-            padding: 10px;
+            padding: 15px;
             background-color: #f9f9f9;
             border-radius: 5px;
-            max-height: 200px;
+            max-height: 300px;
             overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            border: 1px solid #ddd;
+        }
+        #process-log h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        #process-log p {
+            margin: 5px 0;
+        }
+        #process-log .summary {
+            font-weight: bold;
+            margin-top: 10px;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
         }
     </style>
 </head>
@@ -144,12 +161,13 @@
             document.getElementById('result').textContent = '';
             document.getElementById('user-question').textContent = '';
             document.getElementById('error-message').style.display = 'none';
-            processLog.textContent = '';
+            processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
 
             const answerCounts = {};
             const baseRuns = 9;
-            const totalRuns = Math.pow(9, Math.ceil(Math.log(answers.length) / Math.log(9)));
-            const repetitions = answers.length * 9; // Increased repetitions based on answer count
+            const multiplier = answers.length * 9;
+            const totalRuns = baseRuns * multiplier;
+            const repetitions = multiplier; // Same as totalRuns / baseRuns
 
             try {
                 for (let i = 0; i < totalRuns; i++) {
@@ -158,9 +176,9 @@
                     
                     // Only log the process for the first 9 runs
                     if (i < 9) {
-                        processLog.textContent += `Run ${i + 1}: ${answer}\n`;
+                        processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
                     } else if (i === 9) {
-                        processLog.textContent += "...\n";
+                        processLog.innerHTML += "<p>...</p>";
                     }
                 }
 
@@ -172,12 +190,16 @@
                 document.getElementById('result').textContent = `Oracle says (${percentage}% of the time): ${mostFrequentAnswer}`;
                 
                 // Add summary of results
-                processLog.textContent += `\nTotal consultations: ${totalRuns}\n`;
-                processLog.textContent += `Magic phrase processed ${repetitions} times per consultation\n`;
-                processLog.textContent += `Results summary:\n`;
+                processLog.innerHTML += `
+                    <div class="summary">
+                        <p>Total consultations: ${totalRuns}</p>
+                        <p>Magic phrase processed ${repetitions} times per consultation</p>
+                        <p>Results summary:</p>
+                    </div>
+                `;
                 for (const [answer, count] of Object.entries(answerCounts)) {
                     const answerPercentage = ((count / totalRuns) * 100).toFixed(2);
-                    processLog.textContent += `${answer}: ${answerPercentage}%\n`;
+                    processLog.innerHTML += `<p>${answer}: ${answerPercentage}%</p>`;
                 }
             } catch (error) {
                 console.error('Error in askOracleMultipleTimes:', error);
