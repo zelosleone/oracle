@@ -74,8 +74,8 @@
 <img id="talisman-image" src="talisman.png" alt="Talisman">
     <div id="oracle-container">
         <h1>Revealer of Truth</h1>
-        <p>αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι νυρω φωχω βωχ :7</p>
-        <p>הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים.</p>
+        <p id="ancient-message">αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι νυρω φωχω βωχ :7</p>
+        <p id="hebrew-message">הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים.</p>
         <textarea id="answers-input" rows="5" placeholder="Enter possible answers, one per line"></textarea>
         <input type="text" id="question-input" placeholder="What's your question?">
         <button onclick="askOracleMultipleTimes()">Show The Truth! (9 times)</button>
@@ -108,9 +108,16 @@
         }
 
         async function askOracle(answers) {
-            const magicPhrase = "αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι νυρω φωχω βωχ :7 הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים.";
-            const processedPhrase = processMagicPhrase(magicPhrase);
-            console.log('Processed Magic Phrase:', processedPhrase);
+            const ancientMessage = document.getElementById('ancient-message').textContent;
+            const hebrewMessage = document.getElementById('hebrew-message').textContent;
+            const combinedMessage = ancientMessage + ' ' + hebrewMessage;
+            
+            // Process the combined message 9 times
+            let processedMessage = combinedMessage;
+            for (let i = 0; i < 9; i++) {
+                processedMessage = processMagicPhrase(processedMessage);
+            }
+            console.log('Processed Magic Phrase:', processedMessage);
 
             const randomIndex = await getRandomNumber(0, answers.length - 1);
             return answers[randomIndex];
