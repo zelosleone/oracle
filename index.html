@@ -59,6 +59,15 @@
         #error-message {
             color: red;
         }
+        #process-log {
+            text-align: left;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -66,14 +75,15 @@
     <div id="oracle-container">
         <h1>Revealer of Truth</h1>
         <p>αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι νυρω φωχω βωχ :7</p>
-        <p></p>הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים.</p>
+        <p>הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים.</p>
         <textarea id="answers-input" rows="5" placeholder="Enter possible answers, one per line"></textarea>
         <input type="text" id="question-input" placeholder="What's your question?">
-        <button onclick="askOracle()">Show The Truth!</button>
+        <button onclick="askOracleMultipleTimes()">Show The Truth! (9 times)</button>
         <p id="loading">Consulting the oracle...</p>
         <p id="error-message"></p>
         <p id="user-question"></p>
         <p id="result"></p>
+        <div id="process-log"></div>
     </div>
 
     <script>
@@ -94,14 +104,23 @@
         }
 
         function processMagicPhrase(phrase) {
-            // Simple processing to engage the CPU with the phrase
             return phrase.split('').reverse().join('');
         }
 
-        async function askOracle() {
+        async function askOracle(answers) {
+            const magicPhrase = "αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι νυρω φωχω βωχ :7 הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים.";
+            const processedPhrase = processMagicPhrase(magicPhrase);
+            console.log('Processed Magic Phrase:', processedPhrase);
+
+            const randomIndex = await getRandomNumber(0, answers.length - 1);
+            return answers[randomIndex];
+        }
+
+        async function askOracleMultipleTimes() {
             const answersInput = document.getElementById('answers-input').value.trim();
             const questionInput = document.getElementById('question-input');
             const userQuestion = questionInput.value.trim();
+            const processLog = document.getElementById('process-log');
             
             if (answersInput === '' || userQuestion === '') {
                 alert('Please enter both answers and a question.');
@@ -114,24 +133,30 @@
                 return;
             }
 
-            const magicPhrase = "αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι νυρω φωχω βωχ :7 הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים.";
-            // Make the CPU process the magic phrase
-            const processedPhrase = processMagicPhrase(magicPhrase);
-            console.log('Processed Magic Phrase:', processedPhrase);
-
             document.getElementById('loading').style.display = 'block';
             document.getElementById('result').textContent = '';
             document.getElementById('user-question').textContent = '';
             document.getElementById('error-message').style.display = 'none';
+            processLog.textContent = '';
+
+            const answerCounts = {};
+            const totalRuns = 9;
 
             try {
-                const randomIndex = await getRandomNumber(0, answers.length - 1);
-                const selectedAnswer = answers[randomIndex];
+                for (let i = 0; i < totalRuns; i++) {
+                    const answer = await askOracle(answers);
+                    answerCounts[answer] = (answerCounts[answer] || 0) + 1;
+                    processLog.textContent += `Run ${i + 1}: ${answer}\n`;
+                }
+
+                const mostFrequentAnswer = Object.entries(answerCounts).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+                const frequency = answerCounts[mostFrequentAnswer];
+                const percentage = ((frequency / totalRuns) * 100).toFixed(2);
 
                 document.getElementById('user-question').textContent = `Your question: ${userQuestion}`;
-                document.getElementById('result').textContent = `Oracle says: ${selectedAnswer}`;
+                document.getElementById('result').textContent = `Oracle says (${percentage}% of the time): ${mostFrequentAnswer}`;
             } catch (error) {
-                console.error('Error in askOracle:', error);
+                console.error('Error in askOracleMultipleTimes:', error);
                 document.getElementById('error-message').textContent = error.message;
                 document.getElementById('error-message').style.display = 'block';
             } finally {
