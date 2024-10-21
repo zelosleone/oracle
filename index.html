@@ -123,6 +123,8 @@
         const colorPicker = document.getElementById('color-picker');
         const brushSize = document.getElementById('brush-size');
         let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
 
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', draw);
@@ -131,24 +133,23 @@
 
         function startDrawing(e) {
             isDrawing = true;
-            draw(e);
+            [lastX, lastY] = [e.offsetX, e.offsetY];
         }
 
         function draw(e) {
             if (!isDrawing) return;
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.strokeStyle = colorPicker.value;
             ctx.lineWidth = brushSize.value;
             ctx.lineCap = 'round';
-            ctx.strokeStyle = colorPicker.value;
-
-            ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
             ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+            [lastX, lastY] = [e.offsetX, e.offsetY];
         }
 
         function stopDrawing() {
             isDrawing = false;
-            ctx.beginPath();
         }
 
         function clearCanvas() {
