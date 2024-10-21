@@ -24,7 +24,7 @@
             max-width: 600px;
             width: 100%;
         }
-        #question-input, #answers-input {
+        #answers-input {
             width: 80%;
             padding: 10px;
             margin-bottom: 10px;
@@ -85,6 +85,13 @@
             border-top: 1px solid #ddd;
             padding-top: 10px;
         }
+        #canvas {
+            border: 1px solid #000;
+            cursor: crosshair;
+        }
+        #color-picker, #brush-size {
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -94,7 +101,14 @@
         <p id="ancient-message">αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι νυρω φωχω βωχ :7</p>
         <p id="hebrew-message">הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים.</p>
         <textarea id="answers-input" rows="5" placeholder="Enter possible answers, one per line"></textarea>
-        <input type="text" id="question-input" placeholder="What's your question?">
+        <div>
+            <canvas id="canvas" width="400" height="400"></canvas>
+        </div>
+        <div>
+            <input type="color" id="color-picker" value="#000000">
+            <input type="range" id="brush-size" min="1" max="50" value="5">
+        </div>
+        <button onclick="clearCanvas()">Clear Canvas</button>
         <button onclick="askOracleMultipleTimes()">Show The Truth!</button>
         <p id="loading">Consulting the oracle...</p>
         <p id="error-message"></p>
@@ -104,6 +118,43 @@
     </div>
 
     <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const colorPicker = document.getElementById('color-picker');
+        const brushSize = document.getElementById('brush-size');
+        let isDrawing = false;
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        function startDrawing(e) {
+            isDrawing = true;
+            draw(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            ctx.lineWidth = brushSize.value;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = colorPicker.value;
+
+            ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            ctx.beginPath();
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
         async function getRandomNumber(min, max) {
             const apiKey = 'b7e2d30e-28a0-4c92-b839-e278a26f1eb6';
             try {
@@ -154,12 +205,10 @@
 
         async function askOracleMultipleTimes() {
             const answersInput = document.getElementById('answers-input').value.trim();
-            const questionInput = document.getElementById('question-input');
-            const userQuestion = questionInput.value.trim();
             const processLog = document.getElementById('process-log');
             
-            if (answersInput === '' || userQuestion === '') {
-                alert('Please enter both answers and a question.');
+            if (answersInput === '' || canvas.toDataURL() === document.createElement('canvas').toDataURL()) {
+                alert('Please enter both answers and paint your question.');
                 return;
             }
 
@@ -202,7 +251,7 @@
                 const frequency = answerCounts[mostFrequentAnswer];
                 const percentage = ((frequency / totalRuns) * 100).toFixed(2);
 
-                document.getElementById('user-question').textContent = `Your question: ${userQuestion}`;
+                document.getElementById('user-question').textContent = `Your painted question has been received.`;
                 document.getElementById('result').textContent = `Oracle says (${percentage}% of the time): ${mostFrequentAnswer}`;
                 
                 processLog.innerHTML += `
@@ -223,8 +272,6 @@
             } finally {
                 document.getElementById('loading').style.display = 'none';
             }
-            
-            questionInput.value = '';
         }
     </script>
 </body>
