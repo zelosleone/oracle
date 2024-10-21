@@ -24,11 +24,13 @@
             max-width: 600px;
             width: 100%;
         }
-        #canvas {
-            border: 1px solid #000;
+        #answers-input {
+            width: 80%;
+            padding: 10px;
             margin-bottom: 10px;
+            font-size: 16px;
         }
-        #result, #generated-words {
+        #result {
             font-size: 18px;
             margin: 20px 0;
             font-weight: bold;
@@ -46,6 +48,10 @@
         button:hover {
             background-color: #45a049;
         }
+        #user-question {
+            font-weight: bold;
+            margin-top: 20px;
+        }
         #loading, #error-message {
             display: none;
             margin-top: 10px;
@@ -53,25 +59,69 @@
         #error-message {
             color: red;
         }
+        #process-log {
+            text-align: left;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            border: 1px solid #ddd;
+        }
+        #process-log h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        #process-log p {
+            margin: 5px 0;
+        }
+        #process-log .summary {
+            font-weight: bold;
+            margin-top: 10px;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+        #canvas {
+            border: 1px solid #000;
+            cursor: crosshair;
+        }
+        #color-picker, #brush-size {
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
+<img id="talisman-image" src="talisman.png" alt="Talisman">
     <div id="oracle-container">
         <h1>Revealer of Truth</h1>
-        <p id="ancient-message">תֵרְתֵנִיתוֹר דִיַאֲגוֹתֵרֶה תֵרְתֵנִיתוֹר סִיאַפּוֹתֵרֵאֻ קוֹדוֹכוֹר תעשה אותי מנצח בקובעות / עֲדְרִיאֵל הַכּוֹבֵשׁ.</p>
-        <p id="hebrew-message">אַל יִהְיֶה אֶחָד אָדָם יָשָׁר לִי, כִּי אֲנִי תֵרְתֵנִיתוֹר אֵרוֹתוֹרְתִין דּוֹלוֹתוֹר, וְאָנִי נוֹשֵׂא לְהַשְׁלִיךְ אֶת אֲשֶׁר אֶרְדֹּף.</p>
-        <canvas id="canvas" width="400" height="300"></canvas>
-        <br>
+        <p id="ancient-message">αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι νυρω φωχω βωχ :7</p>
+        <p id="hebrew-message">הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים.</p>
+        <textarea id="answers-input" rows="5" placeholder="Enter possible answers, one per line"></textarea>
+        <div>
+            <canvas id="canvas" width="400" height="400"></canvas>
+        </div>
+        <div>
+            <input type="color" id="color-picker" value="#000000">
+            <input type="range" id="brush-size" min="1" max="50" value="5">
+        </div>
         <button onclick="clearCanvas()">Clear Canvas</button>
-        <button onclick="generateWords()">Show The Truth!</button>
+        <button onclick="askOracleMultipleTimes()">Show The Truth!</button>
         <p id="loading">Consulting the oracle...</p>
         <p id="error-message"></p>
-        <p id="generated-words"></p>
+        <p id="user-question"></p>
+        <p id="result"></p>
+        <div id="process-log"></div>
     </div>
 
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const colorPicker = document.getElementById('color-picker');
+        const brushSize = document.getElementById('brush-size');
         let isDrawing = false;
         let lastX = 0;
         let lastY = 0;
@@ -91,6 +141,9 @@
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
             ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.strokeStyle = colorPicker.value;
+            ctx.lineWidth = brushSize.value;
+            ctx.lineCap = 'round';
             ctx.stroke();
             [lastX, lastY] = [e.offsetX, e.offsetY];
         }
@@ -103,52 +156,118 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        async function getRandomNumbers(count, min, max) {
-            const apiKey = 'b7e2d30e-28a0-4c92-b839-e278a26f1eb6'; // Replace with your actual Random.org API key
+        async function getRandomNumber(min, max) {
+            const apiKey = 'b7e2d30e-28a0-4c92-b839-e278a26f1eb6';
             try {
-                const response = await fetch(`https://www.random.org/integers/?num=${count}&min=${min}&max=${max}&col=1&base=10&format=plain&rnd=new&apiKey=${apiKey}`);
+                const response = await fetch(`https://www.random.org/integers/?num=1&min=${min}&max=${max}&col=1&base=10&format=plain&rnd=new&apiKey=${apiKey}`);
 
                 if (!response.ok) {
-                    throw new Error('Failed to get random numbers');
+                    throw new Error('Failed to get random number');
                 }
 
-                const numbers = await response.text();
-                return numbers.trim().split('\n').map(Number);
+                const number = await response.text();
+                return parseInt(number.trim(), 10);
             } catch (error) {
                 throw new Error('Error connecting to Random.org. Please try again.');
             }
         }
 
-        async function fetchBipWords() {
-            try {
-                const response = await fetch('words.json');
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch BIP words: ${response.statusText}`);
-                }
-                const data = await response.json();
-                if (!data.words || !Array.isArray(data.words)) {
-                    throw new Error('Invalid JSON format');
-                }
-                return data.words;
-            } catch (error) {
-                console.error('Error fetching BIP words:', error);
-                throw new Error('Error fetching BIP words. Please try again.');
-            }
+        function processMagicPhrase(phrase) {
+            return phrase.split('').reverse().join('');
         }
 
-        async function generateWords() {
+        function isPrime(num) {
+            for(let i = 2, s = Math.sqrt(num); i <= s; i++)
+                if(num % i === 0) return false; 
+            return num > 1;
+        }
+
+        function getNextPrime(num) {
+            while(!isPrime(num)) {
+                num++;
+            }
+            return num;
+        }
+
+        async function askOracle(answers, repetitions) {
+            const ancientMessage = document.getElementById('ancient-message').textContent;
+            const hebrewMessage = document.getElementById('hebrew-message').textContent;
+            const combinedMessage = ancientMessage + ' ' + hebrewMessage;
+            
+            let processedMessage = combinedMessage;
+            for (let i = 0; i < repetitions; i++) {
+                processedMessage = processMagicPhrase(processedMessage);
+            }
+            console.log(`Processed Magic Phrase ${repetitions} times:`, processedMessage);
+
+            const randomIndex = await getRandomNumber(0, answers.length - 1);
+            return answers[randomIndex];
+        }
+
+        async function askOracleMultipleTimes() {
+            const answersInput = document.getElementById('answers-input').value.trim();
+            const processLog = document.getElementById('process-log');
+            
+            if (answersInput === '' || canvas.toDataURL() === document.createElement('canvas').toDataURL()) {
+                alert('Please enter both answers and paint your question.');
+                return;
+            }
+
+            const answers = answersInput.split('\n').filter(line => line.trim() !== '');
+            if (answers.length < 2) {
+                alert('Please enter at least two possible answers.');
+                return;
+            }
+
             document.getElementById('loading').style.display = 'block';
-            document.getElementById('generated-words').textContent = '';
+            document.getElementById('result').textContent = '';
+            document.getElementById('user-question').textContent = '';
             document.getElementById('error-message').style.display = 'none';
+            processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
+
+            const answerCounts = {};
+            let baseRuns = 9;
+            let repetitions = 9;
+
+            if (answers.length > 2) {
+                baseRuns = getNextPrime(9 * answers.length);
+                repetitions = baseRuns;
+            }
+
+            const totalRuns = baseRuns;
 
             try {
-                const bipWords = await fetchBipWords();
-                const randomIndices = await getRandomNumbers(12, 0, bipWords.length - 1);
-                const selectedWords = randomIndices.map(index => bipWords[index]);
+                for (let i = 0; i < totalRuns; i++) {
+                    const answer = await askOracle(answers, repetitions);
+                    answerCounts[answer] = (answerCounts[answer] || 0) + 1;
+                    
+                    if (i < 9) {
+                        processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
+                    } else if (i === 9) {
+                        processLog.innerHTML += "<p>...</p>";
+                    }
+                }
 
-                document.getElementById('generated-words').textContent = `The Oracle's Answer: ${selectedWords.join(', ')}`;
+                const mostFrequentAnswer = Object.entries(answerCounts).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+                const frequency = answerCounts[mostFrequentAnswer];
+                const percentage = ((frequency / totalRuns) * 100).toFixed(2);
+
+                document.getElementById('user-question').textContent = `Your painted question has been received.`;
+                document.getElementById('result').textContent = `Oracle says (${percentage}% of the time): ${mostFrequentAnswer}`;
+                
+                processLog.innerHTML += `
+                    <div class="summary">
+                        <p>Total consultations: ${totalRuns}</p>
+                        <p>Magic phrase processed ${repetitions} times per consultation</p>
+                        <p>Results summary:</p>
+                    </div>
+                `;
+                for (const [answer, count] of Object.entries(answerCounts)) {
+                    const answerPercentage = ((count / totalRuns) * 100).toFixed(2);
+                    processLog.innerHTML += `<p>${answer}: ${answerPercentage}%</p>`;
+                }
             } catch (error) {
-                console.error('Error in generateWords:', error);
+                console.error('Error in askOracleMultipleTimes:', error);
                 document.getElementById('error-message').textContent = error.message;
                 document.getElementById('error-message').style.display = 'block';
             } finally {
