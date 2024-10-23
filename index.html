@@ -6,209 +6,103 @@
     <title>Oracle</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <style>
-        :root {
-            --primary-color: #4a90e2;
-            --secondary-color: #2c3e50;
-            --accent-color: #e74c3c;
-            --background-color: #ecf0f1;
-            --card-background: #ffffff;
-            --text-color: #2c3e50;
-            --border-radius: 12px;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background-color: var(--background-color);
-            background-image: linear-gradient(45deg, #f3f4f6 25%, transparent 25%),
-                            linear-gradient(-45deg, #f3f4f6 25%, transparent 25%),
-                            linear-gradient(45deg, transparent 75%, #f3f4f6 75%),
-                            linear-gradient(-45deg, transparent 75%, #f3f4f6 75%);
-            background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-            touch-action: none;
+            background-color: #f0f0f0;
+            touch-action: none; /* Prevents default touch behaviors */
         }
-
         #oracle-container {
             text-align: center;
-            padding: 2rem;
-            background-color: var(--card-background);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            max-width: 800px;
-            width: 90%;
-            margin: 2rem;
-        }
-
-        h1 {
-            color: var(--secondary-color);
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        #ancient-message, #hebrew-message {
-            font-family: 'Times New Roman', serif;
-            color: var(--text-color);
-            line-height: 1.6;
-            margin: 1rem 0;
-            padding: 1rem;
-            background-color: rgba(0, 0, 0, 0.05);
-            border-radius: var(--border-radius);
-        }
-
-        #answers-input {
-            width: 90%;
-            padding: 1rem;
-            margin: 1rem 0;
-            font-size: 1rem;
-            border: 2px solid #ddd;
-            border-radius: var(--border-radius);
-            resize: vertical;
-            min-height: 100px;
-            transition: border-color 0.3s ease;
-        }
-
-        #answers-input:focus {
-            border-color: var(--primary-color);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
-        }
-
-        #canvas-container {
-            position: relative;
-            margin: 1rem auto;
-            max-width: 100%;
-            touch-action: none;
-        }
-
-        #canvas {
-            border: 2px solid #ddd;
-            border-radius: var(--border-radius);
-            cursor: crosshair;
-            touch-action: none;
+            padding: 20px;
             background-color: white;
-            max-width: 100%;
-            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
         }
-
-        .controls {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            align-items: center;
-            margin: 1rem 0;
-            flex-wrap: wrap;
+        #answers-input {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 16px;
         }
-
-        input[type="color"] {
-            width: 50px;
-            height: 50px;
-            padding: 0;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-        }
-
-        input[type="range"] {
-            width: 200px;
-            height: 7px;
-            -webkit-appearance: none;
-            background: #ddd;
-            border-radius: 5px;
-            outline: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            background: var(--primary-color);
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        button {
-            padding: 0.8rem 1.5rem;
-            font-size: 1rem;
-            cursor: pointer;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: var(--border-radius);
-            transition: transform 0.2s ease, background-color 0.2s ease;
-            margin: 0.5rem;
-        }
-
-        button:hover {
-            background-color: #357abd;
-            transform: translateY(-2px);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        #process-log {
-            text-align: left;
-            margin-top: 1.5rem;
-            padding: 1.5rem;
-            background-color: #f8f9fa;
-            border-radius: var(--border-radius);
-            max-height: 300px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            line-height: 1.5;
-            border: 1px solid #dee2e6;
-        }
-
         #result {
-            font-size: 1.5rem;
-            margin: 1.5rem 0;
-            padding: 1rem;
-            background-color: #e3f2fd;
-            border-radius: var(--border-radius);
-            color: var(--secondary-color);
+            font-size: 18px;
+            margin: 20px 0;
             font-weight: bold;
         }
-
-        #loading {
-            color: var(--primary-color);
-            font-style: italic;
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
         }
-
+        button:hover {
+            background-color: #45a049;
+        }
+        #user-question {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        #loading, #error-message {
+            display: none;
+            margin-top: 10px;
+        }
         #error-message {
-            color: var(--accent-color);
-            padding: 1rem;
-            border-radius: var(--border-radius);
-            background-color: rgba(231, 76, 60, 0.1);
+            color: red;
         }
-
-        @media (max-width: 600px) {
-            #oracle-container {
-                padding: 1rem;
-                margin: 1rem;
-            }
-
-            h1 {
-                font-size: 1.8rem;
-            }
-
-            #canvas {
-                width: 100%;
-                height: auto;
-            }
+        #process-log {
+            text-align: left;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            border: 1px solid #ddd;
+        }
+        #process-log h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        #process-log p {
+            margin: 5px 0;
+        }
+        #process-log .summary {
+            font-weight: bold;
+            margin-top: 10px;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+        #canvas-container {
+            position: relative;
+            touch-action: none;
+            overflow: hidden;
+        }
+        #canvas {
+            border: 1px solid #000;
+            cursor: crosshair;
+            touch-action: none;
+        }
+        #color-picker, #brush-size {
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
+<img id="talisman-image" src="talisman.png" alt="Talisman">
     <div id="oracle-container">
         <h1>Revealer of Truth</h1>
         <p id="ancient-message">αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι νυρω φωχω βωχ :7</p>
@@ -217,16 +111,14 @@
         <div id="canvas-container">
             <canvas id="canvas" width="400" height="400"></canvas>
         </div>
-        <div class="controls">
-            <input type="color" id="color-picker" value="#000000" title="Choose color">
-            <input type="range" id="brush-size" min="1" max="50" value="5" title="Adjust brush size">
-        </div>
         <div>
-            <button onclick="clearCanvas()">Clear Canvas</button>
-            <button onclick="askOracleMultipleTimes()">Show The Truth!</button>
+            <input type="color" id="color-picker" value="#000000">
+            <input type="range" id="brush-size" min="1" max="50" value="5">
         </div>
-        <p id="loading" style="display: none;">Consulting the oracle...</p>
-        <p id="error-message" style="display: none;"></p>
+        <button onclick="clearCanvas()">Clear Canvas</button>
+        <button onclick="askOracleMultipleTimes()">Show The Truth!</button>
+        <p id="loading">Consulting the oracle...</p>
+        <p id="error-message"></p>
         <p id="user-question"></p>
         <p id="result"></p>
         <div id="process-log"></div>
@@ -241,7 +133,21 @@
         let lastX = 0;
         let lastY = 0;
 
-        // Get mouse position relative to canvas
+        // Handle both mouse and touch events
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 0) {  // Left mouse button only
+                startDrawing(e);
+            }
+        });
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mouseleave', () => isDrawing = false);
+
+        // Touch events
+        canvas.addEventListener('touchstart', handleTouchStart);
+        canvas.addEventListener('touchmove', handleTouchMove);
+        canvas.addEventListener('touchend', () => isDrawing = false);
+
         function getPosition(event) {
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
@@ -259,14 +165,12 @@
             };
         }
 
-        // Start drawing
         function startDrawing(e) {
             isDrawing = true;
             const pos = getPosition(e);
             [lastX, lastY] = [pos.x, pos.y];
         }
 
-        // Draw
         function draw(e) {
             if (!isDrawing) return;
             e.preventDefault();
@@ -283,28 +187,15 @@
             [lastX, lastY] = [pos.x, pos.y];
         }
 
-        // Stop drawing
-        function stopDrawing() {
-            isDrawing = false;
-        }
-
-        // Mouse event listeners
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseout', stopDrawing);
-
-        // Touch event listeners
-        canvas.addEventListener('touchstart', (e) => {
+        function handleTouchStart(e) {
             e.preventDefault();
             startDrawing(e);
-        });
-        canvas.addEventListener('touchmove', (e) => {
+        }
+
+        function handleTouchMove(e) {
             e.preventDefault();
             draw(e);
-        });
-        canvas.addEventListener('touchend', stopDrawing);
-        canvas.addEventListener('touchcancel', stopDrawing);
+        }
 
         function clearCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -324,8 +215,7 @@
                 const numbers = await response.text();
                 return numbers.trim().split('\n').map(n => parseInt(n, 10));
             } catch (error) {
-                console.error('Random.org Error:', error);
-                throw new Error('Unable to access true randomness. Please try again.');
+                throw new Error('Error connecting to Random.org. Please try again.');
             }
         }
 
@@ -340,65 +230,44 @@
         }
 
         function getNextPrime(num) {
-            while(!isPrime(++num)) {};
+            while(!isPrime(num)) {
+                num++;
+            }
             return num;
         }
 
-        async function askOracleMultipleTimes() {
-            const answersInput = document.getElementById('answers-input').value.trim();
-            const processLog = document.getElementById('process-log');
-            
-            if (answersInput === '' || canvas.toDataURL() === document.createElement('canvas').toDataURL()) {
-                alert('Please enter both answers and paint your question.');
-                return;
-            }
-
-            const answers = answersInput.split('\n').filter(line => line.trim() !== '');
-            if (answers.length < 2) {
-                alert('Please enter at least two possible answers.');
-                return;
-            }
-
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('result').textContent = '';
-            document.getElementById('user-question').textContent = '';
-            document.getElementById('error-message').style.display = 'none';
-            processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
-
-            const answerCounts = {};
-            const baseRuns = answers.length > 2 ? getNextPrime(9 * answers.length) : 9;
-            const totalRuns = baseRuns;
+        async function askOracle(answers, repetitions) {
+            const ancientMessage = document.getElementById('ancient-message').textContent;
+            const hebrewMessage = document.getElementById('hebrew-message').textContent;
+            const reversedMessage = processMagicPhrase(ancientMessage);
+            const primeNumber = getNextPrime(repetitions);
+            const primeWithMagic = primeNumber + reversedMessage;
 
             try {
-                const randomNumbers = await getRandomNumbers(0, answers.length - 1, totalRuns);
-                
-                for (let i = 0; i < totalRuns; i++) {
-                    const answer = answers[randomNumbers[i]];
-                    answerCounts[answer] = (answerCounts[answer] || 0) + 1;
-                    
-                    if (i < 9) {
-                        processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
-                    } else if (i === 9) {
-                        processLog.innerHTML += "<p>...</p>";
-                    }
-                }
-
-                const mostFrequentAnswer = Object.entries(answerCounts).reduce((a, b) => a[1] > b[1] ? a : b)[0];
-                const frequency = answerCounts[mostFrequentAnswer];
-                const percentage = ((frequency / totalRuns) * 100).toFixed(2);
-
-                document.getElementById('user-question').textContent = `Your painted question has been received.`;
-                document.getElementById('result').textContent = `Oracle says (${percentage}% certainty): ${mostFrequentAnswer}`;
-                
-                processLog.innerHTML += `
-                    <div class="summary">
-                        <p>Total consultations: ${totalRuns}</p>
-                        <p>Results summary:</p>
-                    </div>
-                `;
-                for (const [answer, count] of Object.entries(answerCounts)) {
-                    const answerPercentage = ((count / totalRuns) * 100).toFixed(2);
-                    processLog.innerHTML += `<p>${answer}: ${answerPercentage}%</p>`;
-                }
+                const randomNumbers = await getRandomNumbers(0, answers.length - 1, repetitions);
+                return randomNumbers.map(num => answers[num]);
             } catch (error) {
-                console.error('Error in askOracleMultipleTimes:', error
+                document.getElementById('error-message').textContent = 'Error fetching data from the oracle. ' + error.message;
+            }
+        }
+
+        async function askOracleMultipleTimes() {
+            const answers = document.getElementById('answers-input').value.trim().split('\n').filter(Boolean);
+            const repetitions = 10;
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error-message').style.display = 'none';
+
+            if (answers.length === 0) {
+                document.getElementById('error-message').textContent = 'Please enter possible answers.';
+                return;
+            }
+
+            const results = await askOracle(answers, repetitions);
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('result').textContent = 'The oracle says: ' + results.join(', ');
+        }
+    </script>
+</body>
+</html>
