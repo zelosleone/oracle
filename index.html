@@ -14,6 +14,7 @@
             min-height: 100vh;
             margin: 0;
             background-color: #f0f0f0;
+            touch-action: none; /* Prevents default touch behaviors */
         }
         #oracle-container {
             text-align: center;
@@ -85,9 +86,15 @@
             border-top: 1px solid #ddd;
             padding-top: 10px;
         }
+        #canvas-container {
+            position: relative;
+            touch-action: none;
+            overflow: hidden;
+        }
         #canvas {
             border: 1px solid #000;
             cursor: crosshair;
+            touch-action: none;
         }
         #color-picker, #brush-size {
             margin: 10px 0;
@@ -101,7 +108,7 @@
         <p id="ancient-message">αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι νυρω φωχω βωχ :7</p>
         <p id="hebrew-message">הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים.</p>
         <textarea id="answers-input" rows="5" placeholder="Enter possible answers, one per line"></textarea>
-        <div>
+        <div id="canvas-container">
             <canvas id="canvas" width="400" height="400"></canvas>
         </div>
         <div>
@@ -126,47 +133,91 @@
         let lastX = 0;
         let lastY = 0;
 
+        // Handle both mouse and touch events
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseout', stopDrawing);
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mouseleave', continueDrawing);
+        canvas.addEventListener('mouseenter', continueDrawing);
+
+        // Touch events
+        canvas.addEventListener('touchstart', handleTouchStart);
+        canvas.addEventListener('touchmove', handleTouchMove);
+        canvas.addEventListener('touchend', () => isDrawing = false);
+
+        function getPosition(event) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            if (event.type.includes('touch')) {
+                return {
+                    x: (event.touches[0].clientX - rect.left) * scaleX,
+                    y: (event.touches[0].clientY - rect.top) * scaleY
+                };
+            }
+            return {
+                x: (event.clientX - rect.left) * scaleX,
+                y: (event.clientY - rect.top) * scaleY
+            };
+        }
 
         function startDrawing(e) {
             isDrawing = true;
-            [lastX, lastY] = [e.offsetX, e.offsetY];
+            const pos = getPosition(e);
+            [lastX, lastY] = [pos.x, pos.y];
         }
 
         function draw(e) {
             if (!isDrawing) return;
+            e.preventDefault();
+            const pos = getPosition(e);
+            
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
-            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.lineTo(pos.x, pos.y);
             ctx.strokeStyle = colorPicker.value;
             ctx.lineWidth = brushSize.value;
             ctx.lineCap = 'round';
             ctx.stroke();
-            [lastX, lastY] = [e.offsetX, e.offsetY];
+            
+            [lastX, lastY] = [pos.x, pos.y];
         }
 
-        function stopDrawing() {
-            isDrawing = false;
+        function continueDrawing(e) {
+            if (e.buttons === 1) { // Left mouse button is pressed
+                const pos = getPosition(e);
+                [lastX, lastY] = [pos.x, pos.y];
+            }
+        }
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            startDrawing(e);
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            draw(e);
         }
 
         function clearCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        async function getRandomNumber(min, max) {
+        async function getRandomNumbers(min, max, count) {
             const apiKey = 'b7e2d30e-28a0-4c92-b839-e278a26f1eb6';
             try {
-                const response = await fetch(`https://www.random.org/integers/?num=1&min=${min}&max=${max}&col=1&base=10&format=plain&rnd=new&apiKey=${apiKey}`);
+                const response = await fetch(
+                    `https://www.random.org/integers/?num=${count}&min=${min}&max=${max}&col=1&base=10&format=plain&rnd=new&apiKey=${apiKey}`
+                );
 
                 if (!response.ok) {
-                    throw new Error('Failed to get random number');
+                    throw new Error('Failed to get random numbers from Random.org');
                 }
 
-                const number = await response.text();
-                return parseInt(number.trim(), 10);
+                const numbers = await response.text();
+                return numbers.trim().split('\n').map(n => parseInt(n, 10));
             } catch (error) {
                 throw new Error('Error connecting to Random.org. Please try again.');
             }
@@ -198,9 +249,9 @@
             for (let i = 0; i < repetitions; i++) {
                 processedMessage = processMagicPhrase(processedMessage);
             }
-            console.log(`Processed Magic Phrase ${repetitions} times:`, processedMessage);
-
-            const randomIndex = await getRandomNumber(0, answers.length - 1);
+            
+            // Get a true random number from Random.org
+            const [randomIndex] = await getRandomNumbers(0, answers.length - 1, 1);
             return answers[randomIndex];
         }
 
@@ -237,8 +288,11 @@
             const totalRuns = baseRuns;
 
             try {
+                // Get all random numbers at once from Random.org
+                const randomNumbers = await getRandomNumbers(0, answers.length - 1, totalRuns);
+                
                 for (let i = 0; i < totalRuns; i++) {
-                    const answer = await askOracle(answers, repetitions);
+                    const answer = answers[randomNumbers[i]];
                     answerCounts[answer] = (answerCounts[answer] || 0) + 1;
                     
                     if (i < 9) {
