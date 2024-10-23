@@ -241,6 +241,7 @@
         let lastX = 0;
         let lastY = 0;
 
+        // Get mouse position relative to canvas
         function getPosition(event) {
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
@@ -258,13 +259,14 @@
             };
         }
 
+        // Start drawing
         function startDrawing(e) {
-            if (e.type === 'mousedown' && e.button !== 0) return; // Only draw with left mouse button
             isDrawing = true;
             const pos = getPosition(e);
             [lastX, lastY] = [pos.x, pos.y];
         }
 
+        // Draw
         function draw(e) {
             if (!isDrawing) return;
             e.preventDefault();
@@ -281,17 +283,18 @@
             [lastX, lastY] = [pos.x, pos.y];
         }
 
+        // Stop drawing
         function stopDrawing() {
             isDrawing = false;
         }
 
-        // Mouse events
+        // Mouse event listeners
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', stopDrawing);
         canvas.addEventListener('mouseout', stopDrawing);
 
-        // Touch events
+        // Touch event listeners
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
             startDrawing(e);
@@ -397,3 +400,5 @@
                     const answerPercentage = ((count / totalRuns) * 100).toFixed(2);
                     processLog.innerHTML += `<p>${answer}: ${answerPercentage}%</p>`;
                 }
+            } catch (error) {
+                console.error('Error in askOracleMultipleTimes:', error
