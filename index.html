@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oracle</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -102,11 +101,8 @@
     </style>
 </head>
 <body>
-<img id="talisman-image" src="talisman.png" alt="Talisman">
     <div id="oracle-container">
         <h1>Revealer of Truth</h1>
-        <p id="ancient-message">αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι νυρω φωχω βωχ :7</p>
-        <p id="hebrew-message">הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים.</p>
         <textarea id="answers-input" rows="5" placeholder="Enter possible answers, one per line"></textarea>
         <div id="canvas-container">
             <canvas id="canvas" width="400" height="400"></canvas>
@@ -132,16 +128,28 @@
         let isDrawing = false;
         let lastX = 0;
         let lastY = 0;
+        let leaveTimeout = null;
 
         // Handle both mouse and touch events
-        canvas.addEventListener('mousedown', (e) => {
-            if (e.button === 0) {  // Left mouse button only
-                startDrawing(e);
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+
+        // Resume drawing if the mouse re-enters the canvas within 1 second
+        canvas.addEventListener('mouseenter', () => {
+            if (leaveTimeout) {
+                clearTimeout(leaveTimeout);
+                leaveTimeout = null;
+                isDrawing = true;
             }
         });
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', () => isDrawing = false);
-        canvas.addEventListener('mouseleave', () => isDrawing = false);
+
+        // Trigger a 1-second timeout on leaving the canvas
+        canvas.addEventListener('mouseleave', () => {
+            if (isDrawing) {
+                leaveTimeout = setTimeout(() => isDrawing = false, 1000); // 1 second timeout
+            }
+        });
 
         // Touch events
         canvas.addEventListener('touchstart', handleTouchStart);
@@ -187,6 +195,14 @@
             [lastX, lastY] = [pos.x, pos.y];
         }
 
+        function stopDrawing() {
+            isDrawing = false;
+            if (leaveTimeout) {
+                clearTimeout(leaveTimeout);
+                leaveTimeout = null;
+            }
+        }
+
         function handleTouchStart(e) {
             e.preventDefault();
             startDrawing(e);
@@ -219,30 +235,7 @@
             }
         }
 
-        function processMagicPhrase(phrase) {
-            return phrase.split('').reverse().join('');
-        }
-
-        function isPrime(num) {
-            for(let i = 2, s = Math.sqrt(num); i <= s; i++)
-                if(num % i === 0) return false; 
-            return num > 1;
-        }
-
-        function getNextPrime(num) {
-            while(!isPrime(num)) {
-                num++;
-            }
-            return num;
-        }
-
         async function askOracle(answers, repetitions) {
-            const ancientMessage = document.getElementById('ancient-message').textContent;
-            const hebrewMessage = document.getElementById('hebrew-message').textContent;
-            const reversedMessage = processMagicPhrase(ancientMessage);
-            const primeNumber = getNextPrime(repetitions);
-            const primeWithMagic = primeNumber + reversedMessage;
-
             try {
                 const randomNumbers = await getRandomNumbers(0, answers.length - 1, repetitions);
                 return randomNumbers.map(num => answers[num]);
