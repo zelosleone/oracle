@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -180,7 +181,6 @@
 <body>
     <div id="oracle-container">
         <h1>Revealer of Truth</h1>
-        <img src="talisman.png" alt="Talisman" style="width: 100px; height: auto; margin-bottom: 1.5rem;">
         <p id="ancient-message" class="ancient-text">αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι νυρω φωχω βωχ :7</p>
         <p id="hebrew-message" class="ancient-text">הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים.</p>
         
@@ -316,23 +316,43 @@
         window.addEventListener('mouseup', stopDrawing);
 
         // Random.org API functions
-        async function getRandomNumbers(min, max, count) {
-            const apiKey = 'b7e2d30e-28a0-4c92-b839-e278a26f1eb6';
-            try {
-                const response = await fetch(
-                    `https://www.random.org/integers/?num=${count}&min=${min}&max=${max}&col=1&base=10&format=plain&rnd=new&apiKey=${apiKey}`
-                );
+async function getRandomNumbers(min, max, count) {
+    try {
+        const response = await fetch('https://api.random.org/json-rpc/4/invoke', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                "jsonrpc": "2.0",
+                "method": "generateIntegers",
+                "params": {
+                    "apiKey": "b7e2d30e-28a0-4c92-b839-e278a26f1eb6",
+                    "n": count,
+                    "min": min,
+                    "max": max,
+                    "replacement": true
+                },
+                "id": 1
+            })
+        });
 
-                if (!response.ok) {
-                    throw new Error('Failed to get random numbers from Random.org');
-                }
-
-                const numbers = await response.text();
-                return numbers.trim().split('\n').map(n => parseInt(n, 10));
-            } catch (error) {
-                throw new Error('Could not obtain true randomness from Random.org. Please try again later.');
-            }
+        if (!response.ok) {
+            throw new Error('Failed to get random numbers from Random.org');
         }
+
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error.message);
+        }
+
+        return data.result.random.data;
+    } catch (error) {
+        console.error('Random.org API Error:', error);
+        throw new Error('Could not obtain true randomness from Random.org. Please try again later.');
+    }
+}
 
         function processMagicPhrase(phrase) {
             return phrase.split('').reverse().join('');
@@ -377,20 +397,19 @@
             const totalRuns = baseRuns;
 
             try {
-                // Get all random numbers at once from Random.org
-                const randomNumbers = await getRandomNumbers(0, answers.length - 1, totalRuns);
-                
-                for (let i = 0; i < totalRuns; i++) {
-                    const answer = answers[randomNumbers[i]];
-                    answerCounts[answer] = (answerCounts[answer] || 0) + 1;
-                    
-                    if (i < 9) {
-                        processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
-                    } else if (i === 9) {
-                        processLog.innerHTML += "<p>...</p>";
-                    }
-                }
-
+// Get all random numbers at once from Random.org
+    const randomNumbers = await getRandomNumbers(0, answers.length - 1, totalRuns);
+    
+    for (let i = 0; i < totalRuns; i++) {
+        const answer = answers[randomNumbers[i]];
+        answerCounts[answer] = (answerCounts[answer] || 0) + 1;
+        
+        if (i < 9) {
+            processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
+        } else if (i === 9) {
+            processLog.innerHTML += "<p>...</p>";
+        }
+    }
                 // Find most frequent answer
                 const mostFrequentAnswer = Object.entries(answerCounts)
                     .reduce((a, b) => a[1] > b[1] ? a : b)[0];
@@ -416,6 +435,17 @@
                                         processLog.innerHTML += `
                         <p>${answer}: ${count} times (${answerPercentage}%)</p>
                     `;
+                }
+
+                // Add visualization of results using ASCII art
+                processLog.innerHTML += `<div class="summary">Distribution visualization:</div>`;
+                const maxCount = Math.max(...Object.values(answerCounts));
+                const barLength = 30; // Maximum bar length in characters
+
+                for (const [answer, count] of Object.entries(answerCounts)) {
+                    const normalizedLength = Math.round((count / maxCount) * barLength);
+                    const bar = '█'.repeat(normalizedLength);
+                    processLog.innerHTML += `<p>${answer}: ${bar} ${count}</p>`;
                 }
 
             } catch (error) {
