@@ -181,6 +181,7 @@
 <body>
     <div id="oracle-container">
         <h1>Revealer of Truth</h1>
+        <img src="talisman.png" alt="Talisman" style="width: 100px; height: auto; margin-bottom: 1.5rem;">
         <p id="ancient-message" class="ancient-text">αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι νυρω φωχω βωχ :7</p>
         <p id="hebrew-message" class="ancient-text">הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים.</p>
         
@@ -435,17 +436,6 @@ async function getRandomNumbers(min, max, count) {
                                         processLog.innerHTML += `
                         <p>${answer}: ${count} times (${answerPercentage}%)</p>
                     `;
-                }
-
-                // Add visualization of results using ASCII art
-                processLog.innerHTML += `<div class="summary">Distribution visualization:</div>`;
-                const maxCount = Math.max(...Object.values(answerCounts));
-                const barLength = 30; // Maximum bar length in characters
-
-                for (const [answer, count] of Object.entries(answerCounts)) {
-                    const normalizedLength = Math.round((count / maxCount) * barLength);
-                    const bar = '█'.repeat(normalizedLength);
-                    processLog.innerHTML += `<p>${answer}: ${bar} ${count}</p>`;
                 }
 
             } catch (error) {
