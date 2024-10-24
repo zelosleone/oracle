@@ -316,25 +316,38 @@
         canvas.addEventListener('touchcancel', stopDrawing);
         window.addEventListener('mouseup', stopDrawing);
 
-        // Random.org API functions
 async function getRandomNumbers(min, max, count) {
     try {
-        const response = await fetch(
-            `https://www.random.org/integers/?num=${count}&min=${min}&max=${max}&col=1&base=10&format=plain&rnd=new`,
-            {
-                method: 'GET'
-            }
-        );
+        const response = await fetch('https://api.random.org/json-rpc/4/invoke', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                "jsonrpc": "2.0",
+                "method": "generateIntegers",
+                "params": {
+                    "apiKey": "b7e2d30e-28a0-4c92-b839-e278a26f1eb6",
+                    "n": count,
+                    "min": min,
+                    "max": max,
+                    "replacement": true
+                },
+                "id": 1
+            })
+        });
 
         if (!response.ok) {
             throw new Error('Failed to get random numbers from Random.org');
         }
 
-        const text = await response.text();
-        // Split the response into an array of numbers
-        const numbers = text.trim().split('\n').map(num => parseInt(num, 10));
+        const data = await response.json();
         
-        return numbers;
+        if (data.error) {
+            throw new Error(data.error.message);
+        }
+
+        return data.result.random.data;
     } catch (error) {
         console.error('Random.org API Error:', error);
         throw new Error('Could not obtain true randomness from Random.org. Please try again later.');
