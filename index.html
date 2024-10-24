@@ -417,7 +417,7 @@ async function askOracleMultipleTimes() {
         processLog.innerHTML += '<p>Answers randomized.</p>';
 
         const answerCounts = {};
-        const baseRuns = getNextPrime(9 * shuffledAnswers.length);
+        const baseRuns = shuffledAnswers.length === 2 ? 9 : getNextPrime(9 * shuffledAnswers.length);
         const totalRuns = baseRuns;
 
         // Run the oracle consultation one at a time
