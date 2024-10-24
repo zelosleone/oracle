@@ -372,82 +372,81 @@ async function getRandomNumbers(min, max, count) {
             return num;
         }
 
-        async function askOracleMultipleTimes() {
-            const answersInput = document.getElementById('answers-input').value.trim();
-            const processLog = document.getElementById('process-log');
-            
-            if (answersInput === '' || canvas.toDataURL() === document.createElement('canvas').toDataURL()) {
-                alert('Please enter both answers and paint your question.');
-                return;
-            }
-
-            const answers = answersInput.split('\n').filter(line => line.trim() !== '');
-            if (answers.length < 2) {
-                alert('Please enter at least two possible answers.');
-                return;
-            }
-
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('result').textContent = '';
-            document.getElementById('user-question').textContent = '';
-            document.getElementById('error-message').style.display = 'none';
-            processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
-
-            const answerCounts = {};
-            const baseRuns = getNextPrime(9 * answers.length);
-            const totalRuns = baseRuns;
-
-            try {
-// Get all random numbers at once from Random.org
-    const randomNumbers = await getRandomNumbers(0, answers.length - 1, totalRuns);
+async function askOracleMultipleTimes() {
+    const answersInput = document.getElementById('answers-input').value.trim();
+    const processLog = document.getElementById('process-log');
     
-    for (let i = 0; i < totalRuns; i++) {
-        const answer = answers[randomNumbers[i]];
-        answerCounts[answer] = (answerCounts[answer] || 0) + 1;
-        
-        if (i < 9) {
-            processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
-        } else if (i === 9) {
-            processLog.innerHTML += "<p>...</p>";
-        }
+    if (answersInput === '' || canvas.toDataURL() === document.createElement('canvas').toDataURL()) {
+        alert('Please enter both answers and paint your question.');
+        return;
     }
-                // Find most frequent answer
-                const mostFrequentAnswer = Object.entries(answerCounts)
-                    .reduce((a, b) => a[1] > b[1] ? a : b)[0];
-                const frequency = answerCounts[mostFrequentAnswer];
-                const percentage = ((frequency / totalRuns) * 100).toFixed(2);
 
-                document.getElementById('user-question').textContent = 'Your painted question has been received.';
-                document.getElementById('result').textContent = 
-                    `Oracle says (${percentage}% certainty): ${mostFrequentAnswer}`;
-                
-                // Generate summary
-                processLog.innerHTML += `
-                    <div class="summary">
-                        <p>Total consultations: ${totalRuns}</p>
-                        <p>Magic phrase processed ${baseRuns} times</p>
-                        <p>Results distribution:</p>
-                    </div>
-                `;
+    const answers = answersInput.split('\n').filter(line => line.trim() !== '');
+    if (answers.length < 2) {
+        alert('Please enter at least two possible answers.');
+        return;
+    }
 
-                // Show distribution of all answers
-                for (const [answer, count] of Object.entries(answerCounts)) {
-                    const answerPercentage = ((count / totalRuns) * 100).toFixed(2);
-                                        processLog.innerHTML += `
-                        <p>${answer}: ${count} times (${answerPercentage}%)</p>
-                    `;
-                }
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('result').textContent = '';
+    document.getElementById('user-question').textContent = '';
+    document.getElementById('error-message').style.display = 'none';
+    processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
 
-            } catch (error) {
-                console.error('Error during oracle consultation:', error);
-                document.getElementById('error-message').textContent = 
-                    'The oracle requires true randomness from Random.org to function. ' +
-                    'Please try again when the connection to the cosmic forces is restored.';
-                document.getElementById('error-message').style.display = 'block';
-            } finally {
-                document.getElementById('loading').style.display = 'none';
+    const answerCounts = {};
+    const baseRuns = getNextPrime(9 * answers.length);
+    const totalRuns = baseRuns;
+
+    try {
+        // Run the oracle consultation one at a time
+        for (let i = 0; i < totalRuns; i++) {
+            const randomNumber = await getRandomNumbers(0, answers.length - 1, 1);
+            const answer = answers[randomNumber[0]];
+            answerCounts[answer] = (answerCounts[answer] || 0) + 1;
+            
+            if (i < 9) {
+                processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
+            } else if (i === 9) {
+                processLog.innerHTML += "<p>...</p>";
             }
         }
+        // Find most frequent answer
+        const mostFrequentAnswer = Object.entries(answerCounts)
+            .reduce((a, b) => a[1] > b[1] ? a : b)[0];
+        const frequency = answerCounts[mostFrequentAnswer];
+        const percentage = ((frequency / totalRuns) * 100).toFixed(2);
+
+        document.getElementById('user-question').textContent = 'Your painted question has been received.';
+        document.getElementById('result').textContent = 
+            `Oracle says (${percentage}% certainty): ${mostFrequentAnswer}`;
+        
+        // Generate summary
+        processLog.innerHTML += `
+            <div class="summary">
+                <p>Total consultations: ${totalRuns}</p>
+                <p>Magic phrase processed ${baseRuns} times</p>
+                <p>Results distribution:</p>
+            </div>
+        `;
+
+        // Show distribution of all answers
+        for (const [answer, count] of Object.entries(answerCounts)) {
+            const answerPercentage = ((count / totalRuns) * 100).toFixed(2);
+            processLog.innerHTML += `
+                <p>${answer}: ${count} times (${answerPercentage}%)</p>
+            `;
+        }
+
+    } catch (error) {
+        console.error('Error during oracle consultation:', error);
+        document.getElementById('error-message').textContent = 
+            'The oracle requires true randomness from Random.org to function. ' +
+            'Please try again when the connection to the cosmic forces is restored.';
+        document.getElementById('error-message').style.display = 'block';
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
+}
 
         // Initialize canvas settings
         initCanvas();
