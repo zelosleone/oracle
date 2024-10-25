@@ -316,98 +316,87 @@
         canvas.addEventListener('touchcancel', stopDrawing);
         window.addEventListener('mouseup', stopDrawing);
 
-async function getRandomNumbers(min, max, count) {
-    const numbers = [];
-    const retries = 3; // Number of retries per number
-    
-    for (let i = 0; i < count; i++) {
-        let success = false;
-        
-        for (let attempt = 0; attempt < retries && !success; attempt++) {
-            try {
-                // Add cache-busting parameter to prevent caching
-                const timestamp = new Date().getTime();
-                const response = await fetch(
-                    `https://www.random.org/integers/?num=1&min=${min}&max=${max}&col=1&base=10&format=plain&rnd=new&timestamp=${timestamp}`,
-                    {
-                        headers: {
-                            'Cache-Control': 'no-cache',
-                            'Pragma': 'no-cache'
-                        },
-                        timeout: 5000 // 5 second timeout
-                    }
-                );
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const text = await response.text();
-                const number = parseInt(text.trim());
-                
-                if (isNaN(number) || number < min || number > max) {
-                    throw new Error('Invalid number received from Random.org');
-                }
-                
-                numbers.push(number);
-                success = true;
-                console.log(`Successfully got random number: ${number}`);
-                
-                // Add a small delay between requests to avoid rate limiting
-                await new Promise(resolve => setTimeout(resolve, 100));
-                
-            } catch (error) {
-                console.error(`Attempt ${attempt + 1} failed:`, error);
-                if (attempt === retries - 1) {
-                    throw new Error(
-                        'Unable to obtain randomness from Random.org after multiple attempts. ' +
-                        'This could be due to rate limiting or network issues. ' +
-                        'Please try again in a few moments.'
-                    );
-                }
-                // Wait longer between retries
-                await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-            }
-        }
+// Store pre-fetched random numbers
+const randomCache = {
+    numbers: [],
+    lastFetch: null,
+    fetchInProgress: false
+};
+
+// Smart fetch that gets more numbers at once and uses them as needed
+async function fetchRandomBatch(min, max, batchSize = 10) {
+    if (randomCache.fetchInProgress) {
+        await new Promise(r => setTimeout(r, 100));
+        return;
     }
     
-    return numbers;
+    randomCache.fetchInProgress = true;
+    const url = `https://www.random.org/integers/?num=${batchSize}&min=${min}&max=${max}&col=1&base=10&format=plain&rnd=new`;
+    
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Random.org request failed');
+        
+        const text = await response.text();
+        const numbers = text.trim().split('\n').map(n => parseInt(n));
+        
+        if (numbers.some(n => isNaN(n))) {
+            throw new Error('Invalid response from Random.org');
+        }
+        
+        randomCache.numbers = randomCache.numbers.concat(numbers);
+        randomCache.lastFetch = Date.now();
+        
+    } catch (error) {
+        console.error('Failed to fetch random numbers:', error);
+        throw new Error('Could not connect to Random.org. Please try again.');
+    } finally {
+        randomCache.fetchInProgress = false;
+    }
 }
 
-async function shuffleAnswers(answers) {
-    try {
-        // Get random numbers for shuffling with retries
-        const indices = await getRandomNumbers(0, answers.length - 1, answers.length);
-        
-        // Create new array and place each answer according to random index
-        const shuffledAnswers = new Array(answers.length);
-        indices.forEach((randomIndex, i) => {
-            shuffledAnswers[randomIndex] = answers[i];
-        });
-        
-        // Verify the shuffle was complete
-        const missingIndices = shuffledAnswers.findIndex(x => x === undefined);
-        if (missingIndices !== -1) {
-            throw new Error('Incomplete shuffle detected');
-        }
-        
-        return shuffledAnswers;
-    } catch (error) {
-        console.error('Error during shuffle:', error);
-        throw error;
+// Smart get that uses cached numbers when available
+async function getRandomNumbers(min, max, count) {
+    if (randomCache.numbers.length < count) {
+        // Calculate optimal batch size based on needed count
+        const batchSize = Math.max(10, Math.ceil(count * 1.5));
+        await fetchRandomBatch(min, max, batchSize);
     }
+    
+    // If we still don't have enough numbers after fetching, throw error
+    if (randomCache.numbers.length < count) {
+        throw new Error('Could not obtain enough random numbers. Please try again.');
+    }
+    
+    // Use cached numbers
+    return randomCache.numbers.splice(0, count);
 }
-        
+
+// Optimized shuffle using Random.org numbers
+async function shuffleAnswers(answers) {
+    const indices = await getRandomNumbers(0, answers.length - 1, answers.length);
+    
+    // Fisher-Yates shuffle using our random numbers
+    const result = [...answers];
+    for (let i = 0; i < indices.length; i++) {
+        const j = indices[i] % (i + 1);
+        [result[i], result[j]] = [result[j], result[i]];
+    }
+    
+    return result;
+}
+
+// Modified oracle consultation function
 async function askOracleMultipleTimes() {
     const answersInput = document.getElementById('answers-input').value.trim();
     const processLog = document.getElementById('process-log');
     
-    if (answersInput === '' || canvas.toDataURL() === document.createElement('canvas').toDataURL()) {
+    if (!answersInput || canvas.toDataURL() === document.createElement('canvas').toDataURL()) {
         alert('Please enter both answers and paint your question.');
         return;
     }
 
-    const answers = answersInput.split('\n').filter(line => line.trim() !== '');
+    const answers = answersInput.split('\n').filter(line => line.trim());
     if (answers.length < 2) {
         alert('Please enter at least two possible answers.');
         return;
@@ -415,52 +404,64 @@ async function askOracleMultipleTimes() {
 
     document.getElementById('loading').style.display = 'block';
     document.getElementById('result').textContent = '';
-    document.getElementById('user-question').textContent = '';
     document.getElementById('error-message').style.display = 'none';
     processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
 
     try {
-        // First, shuffle the answers array using Random.org randomness
-        processLog.innerHTML += '<p>Randomizing answer positions...</p>';
+        // Pre-fetch a batch of random numbers for efficiency
+        const totalRuns = answers.length === 2 ? 9 : getNextPrime(9 * answers.length);
+        const batchSize = Math.ceil(totalRuns * 1.2); // Get 20% extra for safety
+        
+        processLog.innerHTML += '<p>Consulting cosmic forces...</p>';
+        
+        // Shuffle answers first
         const shuffledAnswers = await shuffleAnswers(answers);
-        processLog.innerHTML += '<p>Answers randomized.</p>';
+        processLog.innerHTML += '<p>Answers aligned with cosmic energies.</p>';
 
+        // Get all needed random numbers at once
+        const allRandomNumbers = await getRandomNumbers(0, shuffledAnswers.length - 1, totalRuns);
+        
         const answerCounts = {};
-        const baseRuns = shuffledAnswers.length === 2 ? 9 : getNextPrime(9 * shuffledAnswers.length);
-        const totalRuns = baseRuns;
-
-        // Run the oracle consultation one at a time
         for (let i = 0; i < totalRuns; i++) {
-            const randomNumber = await getRandomNumbers(0, shuffledAnswers.length - 1, 1);
-            const answer = shuffledAnswers[randomNumber[0]];
+            const answer = shuffledAnswers[allRandomNumbers[i]];
             answerCounts[answer] = (answerCounts[answer] || 0) + 1;
             
             if (i < 9) {
-                processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
+                processLog.innerHTML += `<p>Vision ${i + 1}: ${answer}</p>`;
             } else if (i === 9) {
-                processLog.innerHTML += "<p>...</p>";
+                processLog.innerHTML += '<p>More visions materializing...</p>';
             }
         }
 
-        // Find most frequent answer
         const mostFrequentAnswer = Object.entries(answerCounts)
             .reduce((a, b) => a[1] > b[1] ? a : b)[0];
         const frequency = answerCounts[mostFrequentAnswer];
         const percentage = ((frequency / totalRuns) * 100).toFixed(2);
 
-        document.getElementById('user-question').textContent = 'Your painted question has been received.';
         document.getElementById('result').textContent = 
-            `Oracle says (${percentage}% certainty): ${mostFrequentAnswer}`;
-        
-        // Generate summary
+            `Oracle proclaims (${percentage}% certainty): ${mostFrequentAnswer}`;
+
+        // Generate detailed summary
         processLog.innerHTML += `
             <div class="summary">
-                <p>Total consultations: ${totalRuns}</p>
-                <p>Magic phrase processed ${baseRuns} times</p>
+                <p>Total cosmic consultations: ${totalRuns}</p>
                 <p>Results distribution:</p>
+                ${Object.entries(answerCounts)
+                    .map(([answer, count]) => 
+                        `<p>${answer}: ${count} times (${((count/totalRuns)*100).toFixed(2)}%)</p>`)
+                    .join('')}
             </div>
         `;
 
+    } catch (error) {
+        console.error('Oracle consultation error:', error);
+        document.getElementById('error-message').style.display = 'block';
+        document.getElementById('error-message').textContent = 
+            'The cosmic connection was temporarily disturbed. Please try again in a moment.';
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
+}
         // Show distribution of all answers
         for (const [answer, count] of Object.entries(answerCounts)) {
             const answerPercentage = ((count / totalRuns) * 100).toFixed(2);
