@@ -334,7 +334,11 @@ async function fetchRandomBatch(min, max, batchSize = 10) {
     const url = `https://www.random.org/integers/?num=${batchSize}&min=${min}&max=${max}&col=1&base=10&format=plain&rnd=new`;
     
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            method: 'GET',
+            mode: 'cors'  // Explicitly state we want CORS
+        });
+        
         if (!response.ok) throw new Error('Random.org request failed');
         
         const text = await response.text();
@@ -374,22 +378,30 @@ async function getRandomNumbers(min, max, count) {
 
 // Optimized shuffle using Random.org numbers
 async function shuffleAnswers(answers) {
-    const indices = await getRandomNumbers(0, answers.length - 1, answers.length);
-    
-    // Fisher-Yates shuffle using our random numbers
-    const result = [...answers];
-    for (let i = 0; i < indices.length; i++) {
-        const j = indices[i] % (i + 1);
-        [result[i], result[j]] = [result[j], result[i]];
+    try {
+        const indices = await getRandomNumbers(0, answers.length - 1, answers.length);
+        
+        // Fisher-Yates shuffle using our random numbers
+        const result = [...answers];
+        for (let i = 0; i < indices.length; i++) {
+            const j = indices[i] % (i + 1);
+            [result[i], result[j]] = [result[j], result[i]];
+        }
+        
+        return result;
+    } catch (error) {
+        console.error('Shuffle failed:', error);
+        throw error;
     }
-    
-    return result;
 }
 
 // Modified oracle consultation function
 async function askOracleMultipleTimes() {
     const answersInput = document.getElementById('answers-input').value.trim();
     const processLog = document.getElementById('process-log');
+    const loadingElement = document.getElementById('loading');
+    const errorElement = document.getElementById('error-message');
+    const resultElement = document.getElementById('result');
     
     if (!answersInput || canvas.toDataURL() === document.createElement('canvas').toDataURL()) {
         alert('Please enter both answers and paint your question.');
@@ -402,28 +414,25 @@ async function askOracleMultipleTimes() {
         return;
     }
 
-    document.getElementById('loading').style.display = 'block';
-    document.getElementById('result').textContent = '';
-    document.getElementById('error-message').style.display = 'none';
+    loadingElement.style.display = 'block';
+    resultElement.textContent = '';
+    errorElement.style.display = 'none';
     processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
 
     try {
-        // Pre-fetch a batch of random numbers for efficiency
         const totalRuns = answers.length === 2 ? 9 : getNextPrime(9 * answers.length);
-        const batchSize = Math.ceil(totalRuns * 1.2); // Get 20% extra for safety
         
         processLog.innerHTML += '<p>Consulting cosmic forces...</p>';
-        
-        // Shuffle answers first
+// First batch of randomness for shuffling
         const shuffledAnswers = await shuffleAnswers(answers);
         processLog.innerHTML += '<p>Answers aligned with cosmic energies.</p>';
 
-        // Get all needed random numbers at once
-        const allRandomNumbers = await getRandomNumbers(0, shuffledAnswers.length - 1, totalRuns);
+        // Second batch for the actual consultations
+        const consultations = await getRandomNumbers(0, shuffledAnswers.length - 1, totalRuns);
         
         const answerCounts = {};
         for (let i = 0; i < totalRuns; i++) {
-            const answer = shuffledAnswers[allRandomNumbers[i]];
+            const answer = shuffledAnswers[consultations[i]];
             answerCounts[answer] = (answerCounts[answer] || 0) + 1;
             
             if (i < 9) {
@@ -433,12 +442,11 @@ async function askOracleMultipleTimes() {
             }
         }
 
-        const mostFrequentAnswer = Object.entries(answerCounts)
-            .reduce((a, b) => a[1] > b[1] ? a : b)[0];
-        const frequency = answerCounts[mostFrequentAnswer];
+        const [mostFrequentAnswer, frequency] = Object.entries(answerCounts)
+            .reduce((a, b) => a[1] > b[1] ? a : b);
         const percentage = ((frequency / totalRuns) * 100).toFixed(2);
 
-        document.getElementById('result').textContent = 
+        resultElement.textContent = 
             `Oracle proclaims (${percentage}% certainty): ${mostFrequentAnswer}`;
 
         // Generate detailed summary
@@ -455,11 +463,11 @@ async function askOracleMultipleTimes() {
 
     } catch (error) {
         console.error('Oracle consultation error:', error);
-        document.getElementById('error-message').style.display = 'block';
-        document.getElementById('error-message').textContent = 
+        errorElement.style.display = 'block';
+        errorElement.textContent = 
             'The cosmic connection was temporarily disturbed. Please try again in a moment.';
     } finally {
-        document.getElementById('loading').style.display = 'none';
+        loadingElement.style.display = 'none';
     }
 }
         // Show distribution of all answers
