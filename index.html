@@ -316,6 +316,10 @@
         window.addEventListener('mouseup', stopDrawing);
 
 async function getRandomNumbers(min, max, count) {
+    if (min >= max) {
+        throw new Error("Parameter 'min' must be less than parameter 'max'");
+    }
+
     try {
         const response = await fetch('https://api.random.org/json-rpc/4/invoke', {
             method: 'POST',
