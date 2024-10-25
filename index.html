@@ -375,23 +375,23 @@ async function getRandomNumbers(min, max, count) {
         }
 async function shuffleAnswers(answers) {
     try {
-        // Get random numbers for shuffling from Random.org
-        const indices = await getRandomNumbers(0, answers.length - 1, answers.length);
-        
-        // Create new array and place each answer according to random index
+        const min = 0;
+        const max = answers.length - 1;
+        if (min >= max) {
+            throw new Error('Parameter "min" must be less than parameter "max"');
+        }
+        const indices = await getRandomNumbers(min, max, answers.length);
         const shuffledAnswers = new Array(answers.length);
         indices.forEach((randomIndex, i) => {
             shuffledAnswers[randomIndex] = answers[i];
         });
-        
-        // Fill any potential gaps (shouldn't happen, but just in case)
         return shuffledAnswers.filter(answer => answer !== undefined);
     } catch (error) {
         console.error('Error shuffling answers:', error);
         throw error;
     }
 }
-        
+
 async function askOracleMultipleTimes() {
     const answersInput = document.getElementById('answers-input').value.trim();
     const processLog = document.getElementById('process-log');
@@ -414,7 +414,6 @@ async function askOracleMultipleTimes() {
     processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
 
     try {
-        // First, shuffle the answers array using Random.org randomness
         processLog.innerHTML += '<p>Randomizing answer positions...</p>';
         const shuffledAnswers = await shuffleAnswers(answers);
         processLog.innerHTML += '<p>Answers randomized.</p>';
@@ -423,7 +422,6 @@ async function askOracleMultipleTimes() {
         const baseRuns = shuffledAnswers.length === 2 ? 9 : getNextPrime(9 * shuffledAnswers.length);
         const totalRuns = baseRuns;
 
-        // Run the oracle consultation one at a time
         for (let i = 0; i < totalRuns; i++) {
             const randomNumber = await getRandomNumbers(0, shuffledAnswers.length - 1, 1);
             const answer = shuffledAnswers[randomNumber[0]];
@@ -436,7 +434,6 @@ async function askOracleMultipleTimes() {
             }
         }
 
-        // Find most frequent answer
         const mostFrequentAnswer = Object.entries(answerCounts)
             .reduce((a, b) => a[1] > b[1] ? a : b)[0];
         const frequency = answerCounts[mostFrequentAnswer];
@@ -446,7 +443,6 @@ async function askOracleMultipleTimes() {
         document.getElementById('result').textContent = 
             `Oracle says (${percentage}% certainty): ${mostFrequentAnswer}`;
         
-        // Generate summary
         processLog.innerHTML += `
             <div class="summary">
                 <p>Total consultations: ${totalRuns}</p>
@@ -455,7 +451,6 @@ async function askOracleMultipleTimes() {
             </div>
         `;
 
-        // Show distribution of all answers
         for (const [answer, count] of Object.entries(answerCounts)) {
             const answerPercentage = ((count / totalRuns) * 100).toFixed(2);
             processLog.innerHTML += `
