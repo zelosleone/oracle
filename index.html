@@ -357,38 +357,48 @@ async function getRandomNumbers(min, max, count) {
     }
 }
 
-        function processMagicPhrase(phrase) {
-            return phrase.split('').reverse().join('');
-        }
+function processMagicPhrase(phrase) {
+    return phrase.split('').reverse().join('');
+}
 
-        function isPrime(num) {
-            for(let i = 2, s = Math.sqrt(num); i <= s; i++)
-                if(num % i === 0) return false; 
-            return num > 1;
-        }
+function isPrime(num) {
+    for(let i = 2, s = Math.sqrt(num); i <= s; i++)
+        if(num % i === 0) return false; 
+    return num > 1;
+}
 
-        function getNextPrime(num) {
-            while(!isPrime(num)) {
-                num++;
-            }
-            return num;
-        }
+function getNextPrime(num) {
+    while(!isPrime(num)) {
+        num++;
+    }
+    return num;
+}
+
 async function shuffleAnswers(answers) {
     try {
+        // Guard against empty or single-item arrays
+        if (!Array.isArray(answers) || answers.length < 2) {
+            return answers;
+        }
+
         const min = 0;
         const max = answers.length - 1;
-        if (min >= max) {
-            throw new Error('Parameter "min" must be less than parameter "max"');
-        }
+        
+        // Create a temporary array to store shuffled items
+        const shuffledAnswers = [...answers];
         const indices = await getRandomNumbers(min, max, answers.length);
-        const shuffledAnswers = new Array(answers.length);
-        indices.forEach((randomIndex, i) => {
-            shuffledAnswers[randomIndex] = answers[i];
-        });
-        return shuffledAnswers.filter(answer => answer !== undefined);
+        
+        // Use Fisher-Yates shuffle with the random indices
+        for (let i = 0; i < indices.length; i++) {
+            const j = indices[i];
+            [shuffledAnswers[i], shuffledAnswers[j]] = [shuffledAnswers[j], shuffledAnswers[i]];
+        }
+        
+        return shuffledAnswers;
     } catch (error) {
         console.error('Error shuffling answers:', error);
-        throw error;
+        // If shuffling fails, return the original array instead of throwing
+        return answers;
     }
 }
 
@@ -423,7 +433,8 @@ async function askOracleMultipleTimes() {
         const totalRuns = baseRuns;
 
         for (let i = 0; i < totalRuns; i++) {
-            const randomNumber = await getRandomNumbers(0, shuffledAnswers.length - 1, 1);
+            // Ensure min is always less than max
+            const randomNumber = await getRandomNumbers(0, Math.max(0, shuffledAnswers.length - 1), 1);
             const answer = shuffledAnswers[randomNumber[0]];
             answerCounts[answer] = (answerCounts[answer] || 0) + 1;
             
