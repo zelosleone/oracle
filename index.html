@@ -362,15 +362,14 @@ function processMagicPhrase(phrase) {
 }
 
 function isPrime(num) {
-    for(let i = 2, s = Math.sqrt(num); i <= s; i++)
-        if(num % i === 0) return false; 
+    for(let i = 2, s = Math.sqrt(num); i <= s; i++) {
+        if(num % i === 0) return false;
+    }
     return num > 1;
 }
 
 function getNextPrime(num) {
-    while(!isPrime(num)) {
-        num++;
-    }
+    while(!isPrime(++num)) {} // Increment first to avoid checking the same number
     return num;
 }
 
@@ -402,6 +401,31 @@ async function shuffleAnswers(answers) {
     }
 }
 
+async function calculatePentagramEnergy(min = 1, max = 100) {
+    // Get 5 random numbers for pentagram sides
+    const sides = await getRandomNumbers(min, max, 5);
+    
+    // Calculate the golden ratio (phi) - key in pentagram geometry
+    const phi = (1 + Math.sqrt(5)) / 2;
+    
+    // Calculate vertex angles (regular pentagram has 36° between lines)
+    const baseAngle = Math.PI / 5; // 36° in radians
+    
+    // Calculate energies for each point of the pentagram
+    let energyValues = sides.map((side, index) => {
+        // Use golden ratio and side length to calculate point energy
+        const angleInfluence = Math.sin(baseAngle * (index + 1));
+        const sideEnergy = side * phi;
+        return (sideEnergy * angleInfluence) / max; // Normalize to 0-1 range
+    });
+    
+    // Calculate total pentagram energy
+    const totalEnergy = energyValues.reduce((sum, energy) => sum + energy, 0);
+    
+    // Return normalized energy value between 0 and 1
+    return totalEnergy / 5;
+}
+
 async function askOracleMultipleTimes() {
     const answersInput = document.getElementById('answers-input').value.trim();
     const processLog = document.getElementById('process-log');
@@ -427,15 +451,20 @@ async function askOracleMultipleTimes() {
         processLog.innerHTML += '<p>Randomizing answer positions...</p>';
         const shuffledAnswers = await shuffleAnswers(answers);
         processLog.innerHTML += '<p>Answers randomized.</p>';
+        
+        processLog.innerHTML += '<p>Calculating pentagram energies...</p>';
+        const pentagramEnergy = await calculatePentagramEnergy();
+        processLog.innerHTML += `<p>Pentagram energy level: ${(pentagramEnergy * 100).toFixed(2)}%</p>`;
 
         const answerCounts = {};
         const baseRuns = shuffledAnswers.length === 2 ? 9 : getNextPrime(9 * shuffledAnswers.length);
-        const totalRuns = baseRuns;
+        const totalRuns = Math.max(baseRuns, Math.floor(baseRuns * pentagramEnergy));
 
         for (let i = 0; i < totalRuns; i++) {
-            // Ensure min is always less than max
+            // Weight the random selection based on pentagram energy
             const randomNumber = await getRandomNumbers(0, Math.max(0, shuffledAnswers.length - 1), 1);
-            const answer = shuffledAnswers[randomNumber[0]];
+            const energyInfluencedIndex = Math.floor(randomNumber[0] * pentagramEnergy) % shuffledAnswers.length;
+            const answer = shuffledAnswers[energyInfluencedIndex];
             answerCounts[answer] = (answerCounts[answer] || 0) + 1;
             
             if (i < 9) {
@@ -457,6 +486,7 @@ async function askOracleMultipleTimes() {
         processLog.innerHTML += `
             <div class="summary">
                 <p>Total consultations: ${totalRuns}</p>
+                <p>Pentagram influence: ${(pentagramEnergy * 100).toFixed(2)}%</p>
                 <p>Magic phrase processed ${baseRuns} times</p>
                 <p>Results distribution:</p>
             </div>
@@ -479,7 +509,6 @@ async function askOracleMultipleTimes() {
         document.getElementById('loading').style.display = 'none';
     }
 }
-
         // Initialize canvas settings
         initCanvas();
 
@@ -532,8 +561,9 @@ async function askOracleMultipleTimes() {
         }
 
         // Call setupHighDPI on load and resize
-        window.addEventListener('load', setupHighDPI);
-        window.addEventListener('resize', setupHighDPI);
+    const debouncedSetupHighDPI = debounce(setupHighDPI, 250);
+    window.addEventListener('load', setupHighDPI);
+    window.addEventListener('resize', debouncedSetupHighDPI);
     </script>
 </body>
 </html>
