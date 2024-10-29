@@ -564,6 +564,16 @@ async function askOracleMultipleTimes() {
     const debouncedSetupHighDPI = debounce(setupHighDPI, 250);
     window.addEventListener('load', setupHighDPI);
     window.addEventListener('resize', debouncedSetupHighDPI);
+
+    function debounce(func, delay) {
+    let timer;
+    return function() {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            func.apply(this, arguments); 
+        }, delay);
+    };
+}
     </script>
 </body>
 </html>
