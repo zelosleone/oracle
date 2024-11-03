@@ -188,8 +188,8 @@
     <div id="oracle-container">
         <h1>Revealer of Truth</h1>
         <img src="talisman.png" alt="Talisman" style="width: 100px; height: auto; margin-bottom: 1.5rem;">
-        <p id="ancient-message" class="ancient-text">αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι [...]</p>
-        <p id="hebrew-message" class="ancient-text">הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לא [...]</p>
+        <p id="ancient-message" class="ancient-text">αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι [...]
+        <p id="hebrew-message" class="ancient-text">הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לא [...]
         
         <textarea id="answers-input" placeholder="Enter possible answers, one per line"></textarea>
         
@@ -207,7 +207,7 @@
                 <input type="range" id="brush-size" min="1" max="50" value="5">
             </div>
             <button class="clear" onclick="clearCanvas()">Clear Canvas</button>
-            <button onclick="askOracleMultipleTimes">Show The Truth!</button>
+            <button onclick="askOracleMultipleTimes()">Show The Truth!</button>
         </div>
 
         <p id="loading" style="display: none;">Consulting the oracle...</p>
@@ -245,314 +245,325 @@
         ctx.lineJoin = 'round';
     };
 
-        // Get canvas coordinates
-        const getCanvasCoordinates = (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
+    // Numerical Integration using Trapezoidal Rule
+    const numericalIntegration = (func, a, b, n = 1000) => {
+        const h = (b - a) / n;
+        let sum = 0.5 * (func(a) + func(b));
+        for (let i = 1; i < n; i++) {
+            sum += func(a + i * h);
+        }
+        return sum * h;
+    };
 
-            let clientX, clientY;
+    // Get canvas coordinates
+    const getCanvasCoordinates = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
 
-            if (e.type.includes('touch')) {
-                const touch = e.touches[0] || e.changedTouches[0];
-                clientX = touch.clientX;
-                clientY = touch.clientY;
-            } else {
-                clientX = e.clientX;
-                clientY = e.clientY;
-            }
+        let clientX, clientY;
 
-            return {
-                x: (clientX - rect.left) * scaleX,
-                y: (clientY - rect.top) * scaleY
-            };
+        if (e.type.includes('touch')) {
+            const touch = e.touches[0] || e.changedTouches[0];
+            clientX = touch.clientX;
+            clientY = touch.clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY
         };
+    };
 
-        // Drawing functions
-        const startDrawing = (e) => {
-            e.preventDefault();
+    // Drawing functions
+    const startDrawing = (e) => {
+        e.preventDefault();
+        isDrawing = true;
+        const coords = getCanvasCoordinates(e);
+        lastX = coords.x;
+        lastY = coords.y;
+        initCanvas();
+        draw(e); // Start drawing immediately
+    };
+
+    const draw = (e) => {
+        if (!isDrawing) return;
+        e.preventDefault();
+        const coords = getCanvasCoordinates(e);
+
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(coords.x, coords.y);
+        ctx.stroke();
+
+        lastX = coords.x;
+        lastY = coords.y;
+    };
+
+    const stopDrawing = (e) => {
+        if (!isDrawing) return;
+        e.preventDefault();
+        isDrawing = false;
+    };
+
+    const clearCanvas = () => ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Event listeners for canvas
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+    canvas.addEventListener('mouseenter', (e) => {
+        if (e.buttons === 1 || e.buttons === 3) {
             isDrawing = true;
-            const coords = getCanvasCoordinates(e);
-            lastX = coords.x;
-            lastY = coords.y;
-            initCanvas();
-            draw(e); // Start drawing immediately
-        };
-
-        const draw = (e) => {
-            if (!isDrawing) return;
-            e.preventDefault();
-            const coords = getCanvasCoordinates(e);
-
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(coords.x, coords.y);
-            ctx.stroke();
-
-            lastX = coords.x;
-            lastY = coords.y;
-        };
-
-        const stopDrawing = (e) => {
-            if (!isDrawing) return;
-            e.preventDefault();
-            isDrawing = false;
-        };
-
-        const clearCanvas = () => ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Event listeners for canvas
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseleave', stopDrawing);
-        canvas.addEventListener('mouseenter', (e) => {
-            if (e.buttons === 1 || e.buttons === 3) {
-                isDrawing = true;
-                lastX = getCanvasCoordinates(e).x;
-                lastY = getCanvasCoordinates(e).y;
-            }
-        });
-
-        canvas.addEventListener('touchstart', startDrawing, { passive: false });
-        canvas.addEventListener('touchmove', draw, { passive: false });
-        canvas.addEventListener('touchend', stopDrawing, { passive: false });
-        canvas.addEventListener('touchcancel', stopDrawing, { passive: false });
-
-        window.addEventListener('mouseup', stopDrawing);
-        window.addEventListener('touchend', stopDrawing);
-        window.addEventListener('touchcancel', stopDrawing);
-
-        // Prevent default touch actions on canvas to avoid opening keyboard
-        canvas.addEventListener('focus', (e) => {
-            e.preventDefault();
-        });
-
-        // Random.org API interaction
-        const getRandomNumbers = async (min, max, count) => {
-            if (min >= max) {
-                throw new Error("Parameter 'min' must be less than parameter 'max'");
-            }
-
-            try {
-                const response = await fetch('https://api.random.org/json-rpc/4/invoke', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        "jsonrpc": "2.0",
-                        "method": "generateIntegers",
-                        "params": {
-                            "apiKey": "b7e2d30e-28a0-4c92-b839-e278a26f1eb6",
-                            "n": count,
-                            "min": min,
-                            "max": max,
-                            "replacement": true
-                        },
-                        "id": 1
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to get random numbers from Random.org');
-                }
-
-                const data = await response.json();
-
-                if (data.error) {
-                    throw new Error(data.error.message);
-                }
-
-                return data.result.random.data;
-            } catch (error) {
-                console.error('Random.org API Error:', error);
-                throw new Error('Could not obtain true randomness from Random.org. Please try again later.');
-            }
-        };
-
-        // Advanced mathematical computations using math.js
-const calculatePentagramEnergy = async () => {
-    const sides = await getRandomNumbers(1, 100, 5);
-
-    // Represent points using complex numbers
-    const points = sides.map((side, index) => {
-        const angle = ((2 * Math.PI) / 5) * index;
-        return math.complex(side * Math.cos(angle), side * Math.sin(angle));
+            lastX = getCanvasCoordinates(e).x;
+            lastY = getCanvasCoordinates(e).y;
+        }
     });
 
-    // Perform complex calculations with logarithms
-    let energySum = 0;
-    for (let i = 0; i < points.length; i++) {
-        const nextPoint = points[(i + 2) % points.length];
-        const distance = math.abs(math.subtract(points[i], nextPoint));
-        const logDistance = Math.log(distance + 1);
-        energySum += logDistance;
-    }
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDrawing, { passive: false });
+    canvas.addEventListener('touchcancel', stopDrawing, { passive: false });
 
-    // Define the integrand function
-    const integrand = (x) => Math.pow(x, 2) + energySum;
+    window.addEventListener('mouseup', stopDrawing);
+    window.addEventListener('touchend', stopDrawing);
+    window.addEventListener('touchcancel', stopDrawing);
 
-    const lowerLimit = 0;
-    const upperLimit = 5;
+    // Prevent default touch actions on canvas to avoid opening keyboard
+    canvas.addEventListener('focus', (e) => {
+        e.preventDefault();
+    });
 
-    // Use numeric.js for numerical integration
-    const integralValue = numeric.integration(integrand, lowerLimit, upperLimit);
+    // Random.org API interaction
+    const getRandomNumbers = async (min, max, count) => {
+        if (min >= max) {
+            throw new Error("Parameter 'min' must be less than parameter 'max'");
+        }
 
-    // Normalize energy
-    const pentagramEnergy = (integralValue % 1);
+        try {
+            const response = await fetch('https://api.random.org/json-rpc/4/invoke', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    "jsonrpc": "2.0",
+                    "method": "generateIntegers",
+                    "params": {
+                        "apiKey": "b7e2d30e-28a0-4c92-b839-e278a26f1eb6",
+                        "n": count,
+                        "min": min,
+                        "max": max,
+                        "replacement": true
+                    },
+                    "id": 1
+                })
+            });
 
-    return pentagramEnergy;
-};
-        // Shuffle answers using Random.org
-        const shuffleAnswers = async (answers) => {
-            try {
-                if (!Array.isArray(answers) || answers.length < 2) {
-                    return answers;
-                }
+            if (!response.ok) {
+                throw new Error('Failed to get random numbers from Random.org');
+            }
 
-                const indices = await getRandomNumbers(0, answers.length - 1, answers.length);
-                const shuffledAnswers = [...answers];
+            const data = await response.json();
 
-                // Fisher-Yates shuffle using the random indices
-                for (let i = shuffledAnswers.length - 1; i > 0; i--) {
-                    const j = indices[i] % (i + 1);
-                    [shuffledAnswers[i], shuffledAnswers[j]] = [shuffledAnswers[j], shuffledAnswers[i]];
-                }
+            if (data.error) {
+                throw new Error(data.error.message);
+            }
 
-                return shuffledAnswers;
-            } catch (error) {
-                console.error('Error shuffling answers:', error);
-                // Return the original array if shuffling fails
+            return data.result.random.data;
+        } catch (error) {
+            console.error('Random.org API Error:', error);
+            throw new Error('Could not obtain true randomness from Random.org. Please try again later.');
+        }
+    };
+
+    // Advanced mathematical computations using math.js
+    const calculatePentagramEnergy = async () => {
+        const sides = await getRandomNumbers(1, 100, 5);
+
+        // Represent points using complex numbers
+        const points = sides.map((side, index) => {
+            const angle = ((2 * Math.PI) / 5) * index;
+            return math.complex(side * Math.cos(angle), side * Math.sin(angle));
+        });
+
+        // Perform complex calculations with logarithms
+        let energySum = 0;
+        for (let i = 0; i < points.length; i++) {
+            const nextPoint = points[(i + 2) % points.length];
+            const distance = math.abs(math.subtract(points[i], nextPoint));
+            const logDistance = Math.log(distance + 1);
+            energySum += logDistance;
+        }
+
+        // Define the integrand function
+        const integrand = (x) => Math.pow(x, 2) + energySum;
+
+        const lowerLimit = 0;
+        const upperLimit = 5;
+
+        // Use custom numerical integration
+        const integralValue = numericalIntegration(integrand, lowerLimit, upperLimit);
+
+        // Normalize energy
+        const pentagramEnergy = (integralValue % 1);
+
+        return pentagramEnergy;
+    };
+
+    // Shuffle answers using Random.org
+    const shuffleAnswers = async (answers) => {
+        try {
+            if (!Array.isArray(answers) || answers.length < 2) {
                 return answers;
             }
-        };
 
-        const askOracleMultipleTimes = async () => {
-            const answersInput = document.getElementById('answers-input').value.trim();
-            const processLog = document.getElementById('process-log');
+            const indices = await getRandomNumbers(0, answers.length - 1, answers.length);
+            const shuffledAnswers = [...answers];
 
-            // Check for empty canvas
-            const blankCanvas = document.createElement('canvas');
-            blankCanvas.width = canvas.width;
-            blankCanvas.height = canvas.height;
-            const blankCanvasData = blankCanvas.toDataURL();
-            const userCanvasData = canvas.toDataURL();
-
-            if (answersInput === '' || userCanvasData === blankCanvasData) {
-                alert('Please enter both answers and paint your question.');
-                return;
+            // Fisher-Yates shuffle using the random indices
+            for (let i = shuffledAnswers.length - 1; i > 0; i--) {
+                const j = indices[i] % (i + 1);
+                [shuffledAnswers[i], shuffledAnswers[j]] = [shuffledAnswers[j], shuffledAnswers[i]];
             }
 
-            const answers = answersInput.split('\n').filter(line => line.trim() !== '');
-            if (answers.length < 2) {
-                alert('Please enter at least two possible answers.');
-                return;
-            }
+            return shuffledAnswers;
+        } catch (error) {
+            console.error('Error shuffling answers:', error);
+            // Return the original array if shuffling fails
+            return answers;
+        }
+    };
 
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('result').textContent = '';
-            document.getElementById('user-question').textContent = '';
-            document.getElementById('error-message').style.display = 'none';
-            processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
+    const askOracleMultipleTimes = async () => {
+        const answersInput = document.getElementById('answers-input').value.trim();
+        const processLog = document.getElementById('process-log');
 
-            try {
-                processLog.innerHTML += '<p>Randomizing answer positions...</p>';
-                const shuffledAnswers = await shuffleAnswers(answers);
-                processLog.innerHTML += '<p>Answers randomized.</p>';
+        // Check for empty canvas
+        const blankCanvas = document.createElement('canvas');
+        blankCanvas.width = canvas.width;
+        blankCanvas.height = canvas.height;
+        const blankCanvasData = blankCanvas.toDataURL();
+        const userCanvasData = canvas.toDataURL();
 
-                processLog.innerHTML += '<p>Calculating pentagram energies...</p>';
-                const pentagramEnergy = await calculatePentagramEnergy();
-                processLog.innerHTML += `<p>Pentagram energy level: ${(pentagramEnergy * 100).toFixed(2)}%</p>`;
+        if (answersInput === '' || userCanvasData === blankCanvasData) {
+            alert('Please enter both answers and paint your question.');
+            return;
+        }
 
-                const answerCounts = {};
-                const baseRuns = shuffledAnswers.length === 2 ? 9 : getNextPrime(9 * shuffledAnswers.length);
-                const totalRuns = Math.max(baseRuns, Math.floor(baseRuns * pentagramEnergy));
+        const answers = answersInput.split('\n').filter(line => line.trim() !== '');
+        if (answers.length < 2) {
+            alert('Please enter at least two possible answers.');
+            return;
+        }
 
-                for (let i = 0; i < totalRuns; i++) {
-                    const randomNumber = await getRandomNumbers(0, shuffledAnswers.length - 1, 1);
-                    const energyInfluencedIndex = Math.floor(randomNumber[0] * pentagramEnergy) % shuffledAnswers.length;
-                    const answer = shuffledAnswers[energyInfluencedIndex];
-                    answerCounts[answer] = (answerCounts[answer] || 0) + 1;
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('result').textContent = '';
+        document.getElementById('user-question').textContent = '';
+        document.getElementById('error-message').style.display = 'none';
+        processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
 
-                    if (i < 9) {
-                        processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
-                    } else if (i === 9) {
-                        processLog.innerHTML += "<p>...</p>";
-                    }
+        try {
+            processLog.innerHTML += '<p>Randomizing answer positions...</p>';
+            const shuffledAnswers = await shuffleAnswers(answers);
+            processLog.innerHTML += '<p>Answers randomized.</p>';
+
+            processLog.innerHTML += '<p>Calculating pentagram energies...</p>';
+            const pentagramEnergy = await calculatePentagramEnergy();
+            processLog.innerHTML += `<p>Pentagram energy level: ${(pentagramEnergy * 100).toFixed(2)}%</p>`;
+
+            const answerCounts = {};
+            const baseRuns = shuffledAnswers.length === 2 ? 9 : getNextPrime(9 * shuffledAnswers.length);
+            const totalRuns = Math.max(baseRuns, Math.floor(baseRuns * pentagramEnergy));
+
+            for (let i = 0; i < totalRuns; i++) {
+                const randomNumber = await getRandomNumbers(0, shuffledAnswers.length - 1, 1);
+                const energyInfluencedIndex = Math.floor(randomNumber[0] * pentagramEnergy) % shuffledAnswers.length;
+                const answer = shuffledAnswers[energyInfluencedIndex];
+                answerCounts[answer] = (answerCounts[answer] || 0) + 1;
+
+                if (i < 9) {
+                    processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
+                } else if (i === 9) {
+                    processLog.innerHTML += "<p>...</p>";
                 }
+            }
 
-                const mostFrequentAnswer = Object.entries(answerCounts)
-                    .reduce((a, b) => a[1] > b[1] ? a : b)[0];
-                const frequency = answerCounts[mostFrequentAnswer];
-                const percentage = ((frequency / totalRuns) * 100).toFixed(2);
+            const mostFrequentAnswer = Object.entries(answerCounts)
+                .reduce((a, b) => a[1] > b[1] ? a : b)[0];
+            const frequency = answerCounts[mostFrequentAnswer];
+            const percentage = ((frequency / totalRuns) * 100).toFixed(2);
 
-                document.getElementById('user-question').textContent = 'Your painted question has been received.';
-                document.getElementById('result').textContent = 
-                    `Oracle says (${percentage}% certainty): ${mostFrequentAnswer}`;
+            document.getElementById('user-question').textContent = 'Your painted question has been received.';
+            document.getElementById('result').textContent = 
+                `Oracle says (${percentage}% certainty): ${mostFrequentAnswer}`;
 
+            processLog.innerHTML += `
+                <div class="summary">
+                    <p>Total consultations: ${totalRuns}</p>
+                    <p>Pentagram influence: ${(pentagramEnergy * 100).toFixed(2)}%</p>
+                    <p>Results distribution:</p>
+                </div>
+            `;
+
+            for (const [answer, count] of Object.entries(answerCounts)) {
+                const answerPercentage = ((count / totalRuns) * 100).toFixed(2);
                 processLog.innerHTML += `
-                    <div class="summary">
-                        <p>Total consultations: ${totalRuns}</p>
-                        <p>Pentagram influence: ${(pentagramEnergy * 100).toFixed(2)}%</p>
-                        <p>Results distribution:</p>
-                    </div>
+                    <p>${answer}: ${count} times (${answerPercentage}%)</p>
                 `;
-
-                for (const [answer, count] of Object.entries(answerCounts)) {
-                    const answerPercentage = ((count / totalRuns) * 100).toFixed(2);
-                    processLog.innerHTML += `
-                        <p>${answer}: ${count} times (${answerPercentage}%)</p>
-                    `;
-                }
-
-            } catch (error) {
-                console.error('Error during oracle consultation:', error);
-                document.getElementById('error-message').textContent = 
-                    'The oracle requires true randomness from Random.org to function. ' +
-                    'Please try again when the connection to the cosmic forces is restored.';
-                document.getElementById('error-message').style.display = 'block';
-            } finally {
-                document.getElementById('loading').style.display = 'none';
             }
-        };
 
-        // Additional helper functions
-        const isPrime = (num) => {
-            for(let i = 2, s = Math.sqrt(num); i <= s; i++) {
-                if(num % i === 0) return false;
-            }
-            return num > 1;
-        };
+        } catch (error) {
+            console.error('Error during oracle consultation:', error);
+            document.getElementById('error-message').textContent = 
+                'The oracle requires true randomness from Random.org to function. ' +
+                'Please try again when the connection to the cosmic forces is restored.';
+            document.getElementById('error-message').style.display = 'block';
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    };
 
-        const getNextPrime = (num) => {
-            while(!isPrime(++num)) {}
-            return num;
-        };
+    // Additional helper functions
+    const isPrime = (num) => {
+        for(let i = 2, s = Math.sqrt(num); i <= s; i++) {
+            if(num % i === 0) return false;
+        }
+        return num > 1;
+    };
 
-        // Initialize canvas and event listeners
-        initCanvas();
+    const getNextPrime = (num) => {
+        while(!isPrime(++num)) {}
+        return num;
+    };
 
-        // Prevent default touch behavior on canvas to avoid opening keyboard
-        canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-        }, { passive: false });
-        canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-        }, { passive: false });
-        canvas.addEventListener('touchend', (e) => {
-            e.preventDefault();
-        }, { passive: false });
+    // Initialize canvas and event listeners
+    initCanvas();
 
-        // Handle color picker changes
-        colorPicker.addEventListener('change', function() {
-            ctx.strokeStyle = this.value;
-        });
+    // Prevent default touch behavior on canvas to avoid opening keyboard
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+    }, { passive: false });
 
-        // Handle brush size changes
-        brushSize.addEventListener('input', function() {
-            ctx.lineWidth = this.value;
-        });
+    // Handle color picker changes
+    colorPicker.addEventListener('change', function() {
+        ctx.strokeStyle = this.value;
+    });
+
+    // Handle brush size changes
+    brushSize.addEventListener('input', function() {
+        ctx.lineWidth = this.value;
+    });
 
     // High DPI setup
     const setupHighDPI = () => {
@@ -570,21 +581,21 @@ const calculatePentagramEnergy = async () => {
         initCanvas();
     };
 
-        // Prevent scrolling while drawing on mobile
-        document.body.addEventListener('touchmove', (e) => {
-            if (isDrawing) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
-// Then use the debounce function
-const debouncedSetupHighDPI = debounce(setupHighDPI, 250);
+    // Then use the debounce function
+    const debouncedSetupHighDPI = debounce(setupHighDPI, 250);
 
     // Add event listeners after all functions are defined
     window.addEventListener('DOMContentLoaded', () => {
         setupHighDPI();
         window.addEventListener('resize', debouncedSetupHighDPI);
     });
+
+    // Prevent scrolling while drawing on mobile
+    document.body.addEventListener('touchmove', (e) => {
+        if (isDrawing) {
+            e.preventDefault();
+        }
+    }, { passive: false });
     </script>
 </body>
 </html>
