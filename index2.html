@@ -6,7 +6,7 @@
     <title>Oracle</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <style>
-        /* Existing styles remain unchanged, but ensure that canvas has touch-action set to none */
+        /* Root variables */
         :root {
             --primary-color: #4a90e2;
             --secondary-color: #2c3e50;
@@ -27,7 +27,7 @@
             background-color: var(--background-color);
             color: var(--text-color);
             line-height: 1.6;
-            -webkit-user-select: none; /* Prevent selection on mobile */
+            -webkit-user-select: none;
             -ms-user-select: none;
             user-select: none;
         }
@@ -85,7 +85,7 @@
             width: 100%;
             max-width: 400px;
             height: auto;
-            touch-action: none; /* Prevent default touch behaviors */
+            touch-action: none;
         }
 
         .controls {
@@ -180,16 +180,13 @@
             }
         }
     </style>
-    <!-- Include math.js library for advanced mathematical computations -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
 </head>
 <body>
     <div id="oracle-container">
         <h1>Revealer of Truth</h1>
         <img src="talisman.png" alt="Talisman" style="width: 100px; height: auto; margin-bottom: 1.5rem;">
-        <p id="ancient-message" class="ancient-text">αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι [...])
-        <p id="hebrew-message" class="ancient-text">הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לא [...])
+        <p id="ancient-message" class="ancient-text">αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι [...</p>
+        <p id="hebrew-message" class="ancient-text">הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לא [...</p>
 
         <textarea id="answers-input" placeholder="Enter possible answers, one per line"></textarea>
 
@@ -230,7 +227,7 @@
     // Initialize caching for Random.org API responses
     const randomApiCache = {};
 
-    // First, initialize canvas elements
+    // Initialize canvas elements
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     const colorPicker = document.getElementById('color-picker');
@@ -349,8 +346,8 @@
 
     // Random.org API interaction with caching and batching
     const getRandomNumbers = async (min, max, count) => {
-        if (min >= max) {
-            throw new Error("Parameter 'min' must be less than parameter 'max'");
+        if (min > max) {
+            throw new Error("Parameter 'min' must be less than or equal to parameter 'max'");
         }
 
         const cacheKey = `${min}-${max}-${count}`;
@@ -396,142 +393,42 @@
         }
     };
 
-    // Web Worker for heavy mathematical computations
-    let computeWorker;
-    const initializeWorker = () => {
-        const workerCode = `
-            self.importScripts('https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js');
+    const calculatePentagramEnergy = async () => {
+        try {
+            const sides = await getRandomNumbers(1, 100, 5);
 
-            self.onmessage = async function(e) {
-                const { type, data, requestId } = e.data;
-                if (type === 'calculatePentagramEnergy') {
-                    try {
-                        const sides = data.sides;
+            // Calculate points
+            const points = sides.map((side, index) => {
+                const angle = ((2 * Math.PI) / 5) * index;
+                return {
+                    x: side * Math.cos(angle),
+                    y: side * Math.sin(angle)
+                };
+            });
 
-                        // Represent points using complex numbers
-                        const points = sides.map((side, index) => {
-                            const angle = ((2 * Math.PI) / 5) * index;
-                            return math.complex(side * Math.cos(angle), side * Math.sin(angle));
-                        });
-
-                        // Perform complex calculations with logarithms
-                        let energySum = 0;
-                        for (let i = 0; i < points.length; i++) {
-                            const nextPoint = points[(i + 2) % points.length];
-                            const distance = math.abs(math.subtract(points[i], nextPoint));
-                            if (distance < 0) {
-                                throw new Error('Distance cannot be negative');
-                            }
-                            const logDistance = Math.log(distance + 1);
-                            if (isNaN(logDistance) || !isFinite(logDistance)) {
-                                throw new Error('Invalid logarithm result');
-                            }
-                            energySum += logDistance;
-                        }
-
-                        // Define the integrand function
-                        const integrand = (x) => Math.pow(x, 2) + energySum;
-
-                        const lowerLimit = 0;
-                        const upperLimit = 5;
-
-                        // Numerical Integration with edge case handling
-                        const numericalIntegration = (func, a, b, n = 1000) => {
-                            if (a === b) return 0;
-                            const h = (b - a) / n;
-                            let sum = 0.5 * (func(a) + func(b));
-                            for (let i = 1; i < n; i++) {
-                                const x = a + i * h;
-                                const fx = func(x);
-                                if (isNaN(fx) || !isFinite(fx)) {
-                                    continue;
-                                }
-                                sum += fx;
-                            }
-                            return sum * h;
-                        };
-
-                        const integralValue = numericalIntegration(integrand, lowerLimit, upperLimit);
-                        if (isNaN(integralValue) || !isFinite(integralValue)) {
-                            throw new Error('Numerical integration failed');
-                        }
-                        const pentagramEnergy = (integralValue % 1);
-                        if (isNaN(pentagramEnergy) || !isFinite(pentagramEnergy)) {
-                            throw new Error('Pentagram energy calculation resulted in invalid value');
-                        }
-
-                        self.postMessage({ type: 'result', energy: pentagramEnergy, requestId });
-                    } catch (err) {
-                        self.postMessage({ type: 'error', message: err.message, requestId });
-                    }
-                }
-            };
-        `;
-        const blob = new Blob([workerCode], { type: 'application/javascript' });
-        const workerUrl = URL.createObjectURL(blob);
-        computeWorker = new Worker(workerUrl);
-    };
-
-    // Map to handle multiple requests
-    const pentagramEnergyPromises = {};
-
-    // Initialize worker before setting onmessage
-    initializeWorker();
-
-    computeWorker.onmessage = function(e) {
-        const { type, energy, message, requestId } = e.data;
-        if (pentagramEnergyPromises[requestId]) {
-            if (type === 'result') {
-                pentagramEnergyPromises[requestId].resolve(energy);
-            } else if (type === 'error') {
-                pentagramEnergyPromises[requestId].reject(new Error(message));
+            // Calculate energy
+            let energySum = 0;
+            for (let i = 0; i < points.length; i++) {
+                const nextPoint = points[(i + 2) % points.length];
+                const dx = points[i].x - nextPoint.x;
+                const dy = points[i].y - nextPoint.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                energySum += Math.log(distance + 1);
             }
-            delete pentagramEnergyPromises[requestId];
+
+            // Numerical Integration
+            const integrand = (x) => (x * x) + energySum;
+            const lowerLimit = 0;
+            const upperLimit = 5;
+            const integralValue = numericalIntegration(integrand, lowerLimit, upperLimit);
+
+            const pentagramEnergy = integralValue % 1;
+            return pentagramEnergy;
+        } catch (error) {
+            console.error('Error calculating pentagram energy:', error);
+            throw error;
         }
     };
-
-const calculatePentagramEnergy = async () => {
-    try {
-        const sides = await getRandomNumbers(1, 100, 5);
-        
-        // Calculate points
-        const points = sides.map((side, index) => {
-            const angle = ((2 * Math.PI) / 5) * index;
-            return {
-                x: side * Math.cos(angle),
-                y: side * Math.sin(angle)
-            };
-        });
-
-        // Calculate energy
-        let energySum = 0;
-        for (let i = 0; i < points.length; i++) {
-            const nextPoint = points[(i + 2) % points.length];
-            const dx = points[i].x - nextPoint.x;
-            const dy = points[i].y - nextPoint.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            energySum += Math.log(distance + 1);
-        }
-
-        // Simple integration
-        const integrand = (x) => Math.pow(x, 2) + energySum;
-        const lowerLimit = 0;
-        const upperLimit = 5;
-        const steps = 1000;
-        const h = (upperLimit - lowerLimit) / steps;
-        
-        let integralValue = 0;
-        for (let i = 0; i < steps; i++) {
-            const x = lowerLimit + i * h;
-            integralValue += integrand(x) * h;
-        }
-
-        return (integralValue % 1);
-    } catch (error) {
-        console.error('Error calculating pentagram energy:', error);
-        throw error;
-    }
-};
 
     // Shuffle answers using Random.org with optimized API calls
     const shuffleAnswers = async (answers) => {
@@ -558,95 +455,93 @@ const calculatePentagramEnergy = async () => {
     };
 
     // Define askOracleMultipleTimes as a global function
-    function askOracleMultipleTimes() {
-        (async () => {
-            const answersInput = document.getElementById('answers-input').value.trim();
-            const processLog = document.getElementById('process-log');
+    async function askOracleMultipleTimes() {
+        const answersInput = document.getElementById('answers-input').value.trim();
+        const processLog = document.getElementById('process-log');
 
-            // Check for empty canvas
-            const blankCanvas = document.createElement('canvas');
-            blankCanvas.width = canvas.width;
-            blankCanvas.height = canvas.height;
-            const blankCanvasData = blankCanvas.toDataURL();
-            const userCanvasData = canvas.toDataURL();
+        // Check for empty canvas
+        const blankCanvas = document.createElement('canvas');
+        blankCanvas.width = canvas.width;
+        blankCanvas.height = canvas.height;
+        const blankCanvasData = blankCanvas.toDataURL();
+        const userCanvasData = canvas.toDataURL();
 
-            if (answersInput === '' || userCanvasData === blankCanvasData) {
-                alert('Please enter both answers and paint your question.');
-                return;
-            }
+        if (answersInput === '' || userCanvasData === blankCanvasData) {
+            alert('Please enter both answers and paint your question.');
+            return;
+        }
 
-            const answers = answersInput.split('\n').filter(line => line.trim() !== '');
-            if (answers.length < 2) {
-                alert('Please enter at least two possible answers.');
-                return;
-            }
+        const answers = answersInput.split('\n').filter(line => line.trim() !== '');
+        if (answers.length < 2) {
+            alert('Please enter at least two possible answers.');
+            return;
+        }
 
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('result').textContent = '';
-            document.getElementById('user-question').textContent = '';
-            document.getElementById('error-message').style.display = 'none';
-            processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('result').textContent = '';
+        document.getElementById('user-question').textContent = '';
+        document.getElementById('error-message').style.display = 'none';
+        processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
 
-            try {
-                processLog.innerHTML += '<p>Randomizing answer positions...</p>';
-                const shuffledAnswers = await shuffleAnswers(answers);
-                processLog.innerHTML += '<p>Answers randomized.</p>';
+        try {
+            processLog.innerHTML += '<p>Randomizing answer positions...</p>';
+            const shuffledAnswers = await shuffleAnswers(answers);
+            processLog.innerHTML += '<p>Answers randomized.</p>';
 
-                processLog.innerHTML += '<p>Calculating pentagram energies...</p>';
-                const pentagramEnergy = await calculatePentagramEnergy();
-                processLog.innerHTML += `<p>Pentagram energy level: ${(pentagramEnergy * 100).toFixed(2)}%</p>`;
+            processLog.innerHTML += '<p>Calculating pentagram energies...</p>';
+            const pentagramEnergy = await calculatePentagramEnergy();
+            processLog.innerHTML += `<p>Pentagram energy level: ${(pentagramEnergy * 100).toFixed(2)}%</p>`;
 
-                const answerCounts = {};
-                const baseRuns = shuffledAnswers.length === 2 ? 9 : getNextPrime(9 * shuffledAnswers.length);
-                const totalRuns = Math.max(baseRuns, Math.floor(baseRuns * pentagramEnergy));
+            const answerCounts = {};
+            const baseRuns = shuffledAnswers.length === 2 ? 9 : getNextPrime(9 * shuffledAnswers.length);
+            const totalRuns = Math.max(baseRuns, Math.floor(baseRuns * pentagramEnergy));
 
-                for (let i = 0; i < totalRuns; i++) {
-                    const randomNumber = await getRandomNumbers(0, shuffledAnswers.length - 1, 1);
-                    const energyInfluencedIndex = Math.floor((randomNumber[0] * pentagramEnergy) % shuffledAnswers.length);
-                    const answer = shuffledAnswers[energyInfluencedIndex];
-                    answerCounts[answer] = (answerCounts[answer] || 0) + 1;
+            for (let i = 0; i < totalRuns; i++) {
+                const randomNumber = await getRandomNumbers(0, shuffledAnswers.length - 1, 1);
+                const energyInfluencedIndex = Math.floor((randomNumber[0] * pentagramEnergy) % shuffledAnswers.length);
+                const answer = shuffledAnswers[energyInfluencedIndex];
+                answerCounts[answer] = (answerCounts[answer] || 0) + 1;
 
-                    if (i < 9) {
-                        processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
-                    } else if (i === 9) {
-                        processLog.innerHTML += "<p>...</p>";
-                    }
+                if (i < 9) {
+                    processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
+                } else if (i === 9) {
+                    processLog.innerHTML += "<p>...</p>";
                 }
+            }
 
-                const mostFrequentAnswer = Object.entries(answerCounts)
-                    .reduce((a, b) => a[1] > b[1] ? a : b)[0];
-                const frequency = answerCounts[mostFrequentAnswer];
-                const percentage = ((frequency / totalRuns) * 100).toFixed(2);
+            const mostFrequentAnswer = Object.entries(answerCounts)
+                .reduce((a, b) => a[1] > b[1] ? a : b)[0];
+            const frequency = answerCounts[mostFrequentAnswer];
+            const percentage = ((frequency / totalRuns) * 100).toFixed(2);
 
-                document.getElementById('user-question').textContent = 'Your painted question has been received.';
-                document.getElementById('result').textContent = 
-                    `Oracle says (${percentage}% certainty): ${mostFrequentAnswer}`;
+            document.getElementById('user-question').textContent = 'Your painted question has been received.';
+            document.getElementById('result').textContent = 
+                `Oracle says (${percentage}% certainty): ${mostFrequentAnswer}`;
 
+            processLog.innerHTML += `
+                <div class="summary">
+                    <p>Total consultations: ${totalRuns}</p>
+                    <p>Pentagram influence: ${(pentagramEnergy * 100).toFixed(2)}%</p>
+                    <p>Results distribution:</p>
+                </div>
+            `;
+
+            for (const [answer, count] of Object.entries(answerCounts)) {
+                const answerPercentage = ((count / totalRuns) * 100).toFixed(2);
                 processLog.innerHTML += `
-                    <div class="summary">
-                        <p>Total consultations: ${totalRuns}</p>
-                        <p>Pentagram influence: ${(pentagramEnergy * 100).toFixed(2)}%</p>
-                        <p>Results distribution:</p>
-                    </div>
+                    <p>${answer}: ${count} times (${answerPercentage}%)</p>
                 `;
-
-                for (const [answer, count] of Object.entries(answerCounts)) {
-                    const answerPercentage = ((count / totalRuns) * 100).toFixed(2);
-                    processLog.innerHTML += `
-                        <p>${answer}: ${count} times (${answerPercentage}%)</p>
-                    `;
-                }
-
-            } catch (error) {
-                console.error('Error during oracle consultation:', error);
-                document.getElementById('error-message').textContent = 
-                    'The oracle requires true randomness from Random.org to function. ' +
-                    'Please try again when the connection to the cosmic forces is restored.';
-                document.getElementById('error-message').style.display = 'block';
-            } finally {
-                document.getElementById('loading').style.display = 'none';
             }
-        })();
+
+        } catch (error) {
+            console.error('Error during oracle consultation:', error);
+            document.getElementById('error-message').textContent = 
+                'The oracle requires true randomness from Random.org to function. ' +
+                'Please try again when the connection to the cosmic forces is restored.';
+            document.getElementById('error-message').style.display = 'block';
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
     }
 
     // Additional helper functions
@@ -670,7 +565,6 @@ const calculatePentagramEnergy = async () => {
 
     // Initialize canvas and event listeners
     initCanvas();
-    initializeWorker();
 
     // Prevent default touch behavior on canvas to avoid opening keyboard
     canvas.addEventListener('touchstart', (e) => {
