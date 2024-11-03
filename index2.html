@@ -207,7 +207,7 @@
                 <input type="range" id="brush-size" min="1" max="50" value="5">
             </div>
             <button class="clear" onclick="clearCanvas()">Clear Canvas</button>
-            <button onclick="askOracleMultipleTimes()">Show The Truth!</button>
+            <button onclick="askOracleMultipleTimes">Show The Truth!</button>
         </div>
 
         <p id="loading" style="display: none;">Consulting the oracle...</p>
@@ -218,37 +218,32 @@
     </div>
 
     <script>
-// Define the debounce function first
-const debounce = (func, delay) => {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => func.apply(this, args), delay);
-    };
-};
-
-// Then use the debounce function
-const debouncedSetupHighDPI = debounce(setupHighDPI, 250);
-
-window.addEventListener('load', setupHighDPI);
-window.addEventListener('resize', debouncedSetupHighDPI);
-        // Initialize variables and constants
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const colorPicker = document.getElementById('color-picker');
-        const brushSize = document.getElementById('brush-size');
-        let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
-
-        // Initialize canvas settings
-        const initCanvas = () => {
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.strokeStyle = colorPicker.value;
-            ctx.lineWidth = brushSize.value;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+    // Define the debounce function
+    const debounce = (func, delay) => {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => func.apply(this, args), delay);
         };
+    };
+
+    // First, initialize canvas elements
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const colorPicker = document.getElementById('color-picker');
+    const brushSize = document.getElementById('brush-size');
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    // Initialize canvas settings
+    const initCanvas = () => {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.strokeStyle = colorPicker.value;
+        ctx.lineWidth = brushSize.value;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+    };
 
         // Get canvas coordinates
         const getCanvasCoordinates = (e) => {
@@ -559,21 +554,21 @@ const calculatePentagramEnergy = async () => {
             ctx.lineWidth = this.value;
         });
 
-        // High DPI setup
-        const setupHighDPI = () => {
-            const dpr = window.devicePixelRatio || 1;
-            const rect = canvas.getBoundingClientRect();
+    // High DPI setup
+    const setupHighDPI = () => {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
 
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
 
-            ctx.scale(dpr, dpr);
+        ctx.scale(dpr, dpr);
 
-            canvas.style.width = `${rect.width}px`;
-            canvas.style.height = `${rect.height}px`;
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
 
-            initCanvas();
-        };
+        initCanvas();
+    };
 
         // Prevent scrolling while drawing on mobile
         document.body.addEventListener('touchmove', (e) => {
@@ -581,6 +576,15 @@ const calculatePentagramEnergy = async () => {
                 e.preventDefault();
             }
         }, { passive: false });
+
+// Then use the debounce function
+const debouncedSetupHighDPI = debounce(setupHighDPI, 250);
+
+    // Add event listeners after all functions are defined
+    window.addEventListener('DOMContentLoaded', () => {
+        setupHighDPI();
+        window.addEventListener('resize', debouncedSetupHighDPI);
+    });
     </script>
 </body>
 </html>
