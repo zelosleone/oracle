@@ -188,15 +188,15 @@
     <div id="oracle-container">
         <h1>Revealer of Truth</h1>
         <img src="talisman.png" alt="Talisman" style="width: 100px; height: auto; margin-bottom: 1.5rem;">
-        <p id="ancient-message" class="ancient-text">αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι [...]
-        <p id="hebrew-message" class="ancient-text">הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לא [...]
-        
+        <p id="ancient-message" class="ancient-text">αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι [...])
+        <p id="hebrew-message" class="ancient-text">הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לא [...])
+
         <textarea id="answers-input" placeholder="Enter possible answers, one per line"></textarea>
-        
+
         <div id="canvas-container">
             <canvas id="canvas" width="400" height="400"></canvas>
         </div>
-        
+
         <div class="controls">
             <div class="control-group">
                 <label for="color-picker">Color:</label>
@@ -207,7 +207,7 @@
                 <input type="range" id="brush-size" min="1" max="50" value="5">
             </div>
             <button class="clear" onclick="clearCanvas()">Clear Canvas</button>
-            <button onclick="askOracleMultipleTimes()">Show The Truth!</button>
+            <button id="oracle-button">Show The Truth!</button>
         </div>
 
         <p id="loading" style="display: none;">Consulting the oracle...</p>
@@ -227,6 +227,9 @@
         };
     };
 
+    // Initialize caching for Random.org API responses
+    const randomApiCache = {};
+
     // First, initialize canvas elements
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
@@ -245,17 +248,23 @@
         ctx.lineJoin = 'round';
     };
 
-    // Numerical Integration using Trapezoidal Rule
+    // Numerical Integration using Trapezoidal Rule with edge case handling
     const numericalIntegration = (func, a, b, n = 1000) => {
+        if (a === b) return 0;
         const h = (b - a) / n;
         let sum = 0.5 * (func(a) + func(b));
         for (let i = 1; i < n; i++) {
-            sum += func(a + i * h);
+            const x = a + i * h;
+            if (isNaN(func(x)) || !isFinite(func(x))) {
+                console.warn(`Integrand returned invalid value at x=${x}`);
+                continue;
+            }
+            sum += func(x);
         }
         return sum * h;
     };
 
-    // Get canvas coordinates
+    // Get canvas coordinates with validation
     const getCanvasCoordinates = (e) => {
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
@@ -338,10 +347,15 @@
         e.preventDefault();
     });
 
-    // Random.org API interaction
+    // Random.org API interaction with caching and batching
     const getRandomNumbers = async (min, max, count) => {
         if (min >= max) {
             throw new Error("Parameter 'min' must be less than parameter 'max'");
+        }
+
+        const cacheKey = `${min}-${max}-${count}`;
+        if (randomApiCache[cacheKey]) {
+            return randomApiCache[cacheKey];
         }
 
         try {
@@ -374,6 +388,7 @@
                 throw new Error(data.error.message);
             }
 
+            randomApiCache[cacheKey] = data.result.random.data;
             return data.result.random.data;
         } catch (error) {
             console.error('Random.org API Error:', error);
@@ -381,41 +396,111 @@
         }
     };
 
-    // Advanced mathematical computations using math.js
-    const calculatePentagramEnergy = async () => {
-        const sides = await getRandomNumbers(1, 100, 5);
+    // Web Worker for heavy mathematical computations
+    let computeWorker;
+    const initializeWorker = () => {
+        const workerCode = `
+            self.importScripts('https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js');
 
-        // Represent points using complex numbers
-        const points = sides.map((side, index) => {
-            const angle = ((2 * Math.PI) / 5) * index;
-            return math.complex(side * Math.cos(angle), side * Math.sin(angle));
-        });
+            self.onmessage = async function(e) {
+                const { type, data, requestId } = e.data;
+                if (type === 'calculatePentagramEnergy') {
+                    try {
+                        const sides = data.sides;
 
-        // Perform complex calculations with logarithms
-        let energySum = 0;
-        for (let i = 0; i < points.length; i++) {
-            const nextPoint = points[(i + 2) % points.length];
-            const distance = math.abs(math.subtract(points[i], nextPoint));
-            const logDistance = Math.log(distance + 1);
-            energySum += logDistance;
-        }
+                        // Represent points using complex numbers
+                        const points = sides.map((side, index) => {
+                            const angle = ((2 * Math.PI) / 5) * index;
+                            return math.complex(side * Math.cos(angle), side * Math.sin(angle));
+                        });
 
-        // Define the integrand function
-        const integrand = (x) => Math.pow(x, 2) + energySum;
+                        // Perform complex calculations with logarithms
+                        let energySum = 0;
+                        for (let i = 0; i < points.length; i++) {
+                            const nextPoint = points[(i + 2) % points.length];
+                            const distance = math.abs(math.subtract(points[i], nextPoint));
+                            if (distance < 0) {
+                                throw new Error('Distance cannot be negative');
+                            }
+                            const logDistance = Math.log(distance + 1);
+                            if (isNaN(logDistance) || !isFinite(logDistance)) {
+                                throw new Error('Invalid logarithm result');
+                            }
+                            energySum += logDistance;
+                        }
 
-        const lowerLimit = 0;
-        const upperLimit = 5;
+                        // Define the integrand function
+                        const integrand = (x) => Math.pow(x, 2) + energySum;
 
-        // Use custom numerical integration
-        const integralValue = numericalIntegration(integrand, lowerLimit, upperLimit);
+                        const lowerLimit = 0;
+                        const upperLimit = 5;
 
-        // Normalize energy
-        const pentagramEnergy = (integralValue % 1);
+                        // Numerical Integration with edge case handling
+                        const numericalIntegration = (func, a, b, n = 1000) => {
+                            if (a === b) return 0;
+                            const h = (b - a) / n;
+                            let sum = 0.5 * (func(a) + func(b));
+                            for (let i = 1; i < n; i++) {
+                                const x = a + i * h;
+                                const fx = func(x);
+                                if (isNaN(fx) || !isFinite(fx)) {
+                                    continue;
+                                }
+                                sum += fx;
+                            }
+                            return sum * h;
+                        };
 
-        return pentagramEnergy;
+                        const integralValue = numericalIntegration(integrand, lowerLimit, upperLimit);
+                        if (isNaN(integralValue) || !isFinite(integralValue)) {
+                            throw new Error('Numerical integration failed');
+                        }
+                        const pentagramEnergy = (integralValue % 1);
+                        if (isNaN(pentagramEnergy) || !isFinite(pentagramEnergy)) {
+                            throw new Error('Pentagram energy calculation resulted in invalid value');
+                        }
+
+                        self.postMessage({ type: 'result', energy: pentagramEnergy, requestId });
+                    } catch (err) {
+                        self.postMessage({ type: 'error', message: err.message, requestId });
+                    }
+                }
+            };
+        `;
+        const blob = new Blob([workerCode], { type: 'application/javascript' });
+        const workerUrl = URL.createObjectURL(blob);
+        computeWorker = new Worker(workerUrl);
     };
 
-    // Shuffle answers using Random.org
+    // Map to handle multiple requests
+    const pentagramEnergyPromises = {};
+
+    // Initialize worker before setting onmessage
+    initializeWorker();
+
+    computeWorker.onmessage = function(e) {
+        const { type, energy, message, requestId } = e.data;
+        if (pentagramEnergyPromises[requestId]) {
+            if (type === 'result') {
+                pentagramEnergyPromises[requestId].resolve(energy);
+            } else if (type === 'error') {
+                pentagramEnergyPromises[requestId].reject(new Error(message));
+            }
+            delete pentagramEnergyPromises[requestId];
+        }
+    };
+
+    // Function to calculate pentagram energy
+    const calculatePentagramEnergy = async () => {
+        const requestId = Date.now();
+        const sides = await getRandomNumbers(1, 100, 5);
+        computeWorker.postMessage({ type: 'calculatePentagramEnergy', data: { sides }, requestId });
+        return new Promise((resolve, reject) => {
+            pentagramEnergyPromises[requestId] = { resolve, reject };
+        });
+    };
+
+    // Shuffle answers using Random.org with optimized API calls
     const shuffleAnswers = async (answers) => {
         try {
             if (!Array.isArray(answers) || answers.length < 2) {
@@ -439,94 +524,97 @@
         }
     };
 
-    const askOracleMultipleTimes = async () => {
-        const answersInput = document.getElementById('answers-input').value.trim();
-        const processLog = document.getElementById('process-log');
+    // Define askOracleMultipleTimes as a global function
+    function askOracleMultipleTimes() {
+        (async () => {
+            const answersInput = document.getElementById('answers-input').value.trim();
+            const processLog = document.getElementById('process-log');
 
-        // Check for empty canvas
-        const blankCanvas = document.createElement('canvas');
-        blankCanvas.width = canvas.width;
-        blankCanvas.height = canvas.height;
-        const blankCanvasData = blankCanvas.toDataURL();
-        const userCanvasData = canvas.toDataURL();
+            // Check for empty canvas
+            const blankCanvas = document.createElement('canvas');
+            blankCanvas.width = canvas.width;
+            blankCanvas.height = canvas.height;
+            const blankCanvasData = blankCanvas.toDataURL();
+            const userCanvasData = canvas.toDataURL();
 
-        if (answersInput === '' || userCanvasData === blankCanvasData) {
-            alert('Please enter both answers and paint your question.');
-            return;
-        }
+            if (answersInput === '' || userCanvasData === blankCanvasData) {
+                alert('Please enter both answers and paint your question.');
+                return;
+            }
 
-        const answers = answersInput.split('\n').filter(line => line.trim() !== '');
-        if (answers.length < 2) {
-            alert('Please enter at least two possible answers.');
-            return;
-        }
+            const answers = answersInput.split('\n').filter(line => line.trim() !== '');
+            if (answers.length < 2) {
+                alert('Please enter at least two possible answers.');
+                return;
+            }
 
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('result').textContent = '';
-        document.getElementById('user-question').textContent = '';
-        document.getElementById('error-message').style.display = 'none';
-        processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').textContent = '';
+            document.getElementById('user-question').textContent = '';
+            document.getElementById('error-message').style.display = 'none';
+            processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
 
-        try {
-            processLog.innerHTML += '<p>Randomizing answer positions...</p>';
-            const shuffledAnswers = await shuffleAnswers(answers);
-            processLog.innerHTML += '<p>Answers randomized.</p>';
+            try {
+                processLog.innerHTML += '<p>Randomizing answer positions...</p>';
+                const shuffledAnswers = await shuffleAnswers(answers);
+                processLog.innerHTML += '<p>Answers randomized.</p>';
 
-            processLog.innerHTML += '<p>Calculating pentagram energies...</p>';
-            const pentagramEnergy = await calculatePentagramEnergy();
-            processLog.innerHTML += `<p>Pentagram energy level: ${(pentagramEnergy * 100).toFixed(2)}%</p>`;
+                processLog.innerHTML += '<p>Calculating pentagram energies...</p>';
+                const pentagramEnergy = await calculatePentagramEnergy();
+                processLog.innerHTML += `<p>Pentagram energy level: ${(pentagramEnergy * 100).toFixed(2)}%</p>`;
 
-            const answerCounts = {};
-            const baseRuns = shuffledAnswers.length === 2 ? 9 : getNextPrime(9 * shuffledAnswers.length);
-            const totalRuns = Math.max(baseRuns, Math.floor(baseRuns * pentagramEnergy));
+                const answerCounts = {};
+                const baseRuns = shuffledAnswers.length === 2 ? 9 : getNextPrime(9 * shuffledAnswers.length);
+                const totalRuns = Math.max(baseRuns, Math.floor(baseRuns * pentagramEnergy));
 
-            for (let i = 0; i < totalRuns; i++) {
-                const randomNumber = await getRandomNumbers(0, shuffledAnswers.length - 1, 1);
-                const energyInfluencedIndex = Math.floor(randomNumber[0] * pentagramEnergy) % shuffledAnswers.length;
-                const answer = shuffledAnswers[energyInfluencedIndex];
-                answerCounts[answer] = (answerCounts[answer] || 0) + 1;
+                for (let i = 0; i < totalRuns; i++) {
+                    const randomNumber = await getRandomNumbers(0, shuffledAnswers.length - 1, 1);
+                    const energyInfluencedIndex = Math.floor((randomNumber[0] * pentagramEnergy) % shuffledAnswers.length);
+                    const answer = shuffledAnswers[energyInfluencedIndex];
+                    answerCounts[answer] = (answerCounts[answer] || 0) + 1;
 
-                if (i < 9) {
-                    processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
-                } else if (i === 9) {
-                    processLog.innerHTML += "<p>...</p>";
+                    if (i < 9) {
+                        processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
+                    } else if (i === 9) {
+                        processLog.innerHTML += "<p>...</p>";
+                    }
                 }
-            }
 
-            const mostFrequentAnswer = Object.entries(answerCounts)
-                .reduce((a, b) => a[1] > b[1] ? a : b)[0];
-            const frequency = answerCounts[mostFrequentAnswer];
-            const percentage = ((frequency / totalRuns) * 100).toFixed(2);
+                const mostFrequentAnswer = Object.entries(answerCounts)
+                    .reduce((a, b) => a[1] > b[1] ? a : b)[0];
+                const frequency = answerCounts[mostFrequentAnswer];
+                const percentage = ((frequency / totalRuns) * 100).toFixed(2);
 
-            document.getElementById('user-question').textContent = 'Your painted question has been received.';
-            document.getElementById('result').textContent = 
-                `Oracle says (${percentage}% certainty): ${mostFrequentAnswer}`;
+                document.getElementById('user-question').textContent = 'Your painted question has been received.';
+                document.getElementById('result').textContent = 
+                    `Oracle says (${percentage}% certainty): ${mostFrequentAnswer}`;
 
-            processLog.innerHTML += `
-                <div class="summary">
-                    <p>Total consultations: ${totalRuns}</p>
-                    <p>Pentagram influence: ${(pentagramEnergy * 100).toFixed(2)}%</p>
-                    <p>Results distribution:</p>
-                </div>
-            `;
-
-            for (const [answer, count] of Object.entries(answerCounts)) {
-                const answerPercentage = ((count / totalRuns) * 100).toFixed(2);
                 processLog.innerHTML += `
-                    <p>${answer}: ${count} times (${answerPercentage}%)</p>
+                    <div class="summary">
+                        <p>Total consultations: ${totalRuns}</p>
+                        <p>Pentagram influence: ${(pentagramEnergy * 100).toFixed(2)}%</p>
+                        <p>Results distribution:</p>
+                    </div>
                 `;
-            }
 
-        } catch (error) {
-            console.error('Error during oracle consultation:', error);
-            document.getElementById('error-message').textContent = 
-                'The oracle requires true randomness from Random.org to function. ' +
-                'Please try again when the connection to the cosmic forces is restored.';
-            document.getElementById('error-message').style.display = 'block';
-        } finally {
-            document.getElementById('loading').style.display = 'none';
-        }
-    };
+                for (const [answer, count] of Object.entries(answerCounts)) {
+                    const answerPercentage = ((count / totalRuns) * 100).toFixed(2);
+                    processLog.innerHTML += `
+                        <p>${answer}: ${count} times (${answerPercentage}%)</p>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('Error during oracle consultation:', error);
+                document.getElementById('error-message').textContent = 
+                    'The oracle requires true randomness from Random.org to function. ' +
+                    'Please try again when the connection to the cosmic forces is restored.';
+                document.getElementById('error-message').style.display = 'block';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        })();
+    }
 
     // Additional helper functions
     const isPrime = (num) => {
@@ -541,8 +629,15 @@
         return num;
     };
 
+    const displayError = (message) => {
+        document.getElementById('error-message').textContent = message;
+        document.getElementById('error-message').style.display = 'block';
+        document.getElementById('loading').style.display = 'none';
+    };
+
     // Initialize canvas and event listeners
     initCanvas();
+    initializeWorker();
 
     // Prevent default touch behavior on canvas to avoid opening keyboard
     canvas.addEventListener('touchstart', (e) => {
@@ -565,7 +660,7 @@
         ctx.lineWidth = this.value;
     });
 
-    // High DPI setup
+    // High DPI setup with optimized debounce
     const setupHighDPI = () => {
         const dpr = window.devicePixelRatio || 1;
         const rect = canvas.getBoundingClientRect();
