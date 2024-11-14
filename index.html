@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="oracle-container">
+        <h1>Revealer of Truth</h1>
+        <img src="talisman.png" alt="Talisman" style="width: 100px; height: auto; margin-bottom: 1.5rem;">
+        <p id="ancient-message" class="ancient-text">αιη αιωι ηωιαη αη ιω ωη αιηουευωαι εαι υο ιαω ιωη οαυ αεη υωυω χαβραχ φλιεσ κηρφι νυρω φωχω βωχ :7</p>
+        <p id="hebrew-message" class="ancient-text">הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים.</p>
+        
+        <textarea id="answers-input" placeholder="Enter possible answers, one per line"></textarea>
+        
+        <div id="canvas-container">
+            <canvas id="canvas" width="400" height="400"></canvas>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="color-picker">Color:</label>
+                <input type="color" id="color-picker" value="#000000">
+            </div>
+            <div class="control-group">
+                <label for="brush-size">Size:</label>
+                <input type="range" id="brush-size" min="1" max="50" value="5">
+            </div>
+            <button class="clear" onclick="clearCanvas()">Clear Canvas</button>
+            <button onclick="askOracleMultipleTimes()">Show The Truth!</button>
+        </div>
+
+        <p id="loading" style="display: none;">Consulting the oracle...</p>
+        <p id="error-message" style="display: none;"></p>
+        <p id="user-question"></p>
+        <p id="result"></p>
+        <div id="process-log"></div>
+    </div>
+
+    <script src="js/oracle.js"></script>
+</body>
+</html>

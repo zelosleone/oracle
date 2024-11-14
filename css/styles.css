@@ -1,0 +1,170 @@
+
+:root {
+    --primary-color: #4a90e2;
+    --secondary-color: #2c3e50;
+    --accent-color: #e74c3c;
+    --background-color: #ecf0f1;
+    --card-background: #ffffff;
+    --text-color: #2c3e50;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+#oracle-container {
+    text-align: center;
+    padding: 2rem;
+    background-color: var(--card-background);
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    max-width: 800px;
+    width: 90%;
+    margin: 2rem;
+}
+
+h1 {
+    color: var(--secondary-color);
+    margin-bottom: 1.5rem;
+    font-size: 2.5rem;
+}
+
+.ancient-text {
+    font-family: 'Times New Roman', Times, serif;
+    font-style: italic;
+    color: var(--secondary-color);
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+#answers-input {
+    width: 90%;
+    padding: 1rem;
+    margin: 1rem 0;
+    font-size: 1rem;
+    border: 2px solid var(--primary-color);
+    border-radius: 8px;
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+}
+
+#canvas-container {
+    position: relative;
+    margin: 2rem auto;
+    max-width: 100%;
+    touch-action: none;
+}
+
+#canvas {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    touch-action: none;
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+}
+
+.controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+button {
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+button:hover {
+    background-color: #357abd;
+    transform: translateY(-2px);
+}
+
+button.clear {
+    background-color: var(--accent-color);
+}
+
+#loading {
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+#error-message {
+    color: var(--accent-color);
+    font-weight: bold;
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: rgba(231, 76, 60, 0.1);
+}
+
+#process-log {
+    text-align: left;
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    border: 1px solid #dee2e6;
+}
+
+.summary {
+    border-top: 2px solid var(--primary-color);
+    margin-top: 1rem;
+    padding-top: 1rem;
+}
+
+#result {
+    font-size: 1.5rem;
+    margin: 2rem 0;
+    padding: 1rem;
+    background-color: rgba(74, 144, 226, 0.1);
+    border-radius: 8px;
+    color: var(--primary-color);
+}
+
+@media (max-width: 600px) {
+    #oracle-container {
+        padding: 1rem;
+        margin: 1rem;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .controls {
+        flex-direction: column;
+    }
+}
