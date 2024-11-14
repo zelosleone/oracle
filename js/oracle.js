@@ -189,14 +189,17 @@ async function shuffleAnswers(answers) {
 }
 
 function calculateComplexityIndex(numbers) {
-    // Calculate statistical complexity using entropy and disequilibrium
+    if (!numbers || numbers.length === 0) {
+        return 0; // Return default value for empty arrays
+    }
+    
     const mean = numbers.reduce((a, b) => a + b, 0) / numbers.length;
     const variance = numbers.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / numbers.length;
-    const entropy = -numbers.reduce((a, b) => {
-        const p = Math.abs(b - mean) / Math.sqrt(variance);
+    const entropy = numbers.reduce((a, b) => {
+        const p = Math.abs(b - mean) / (Math.sqrt(variance) || 1); // Prevent division by zero
         return a + (p > 0 ? p * Math.log(p) : 0);
     }, 0);
-    return Math.exp(entropy) / numbers.length;
+    return Math.exp(entropy) / (numbers.length || 1); // Prevent division by zero
 }
 
 function calculateQuantumFluctuation(energy) {
