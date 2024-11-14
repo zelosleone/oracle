@@ -1,4 +1,4 @@
-# Oracle - Quantum-Enhanced Decision Engine
+# Oracle - Decision Engine
 
 A stochastic decision-making system implementing quantum mechanical principles, wave function transformations, and true random number generation through an interactive web interface.
 
@@ -20,7 +20,7 @@ Where:
 The system utilizes Shannon entropy for distribution analysis:
 H = -Σ p(x)log₂(p(x))
 
-#### Quantum Energy Calculations
+#### Pentagram Calculations
 Energy values computed through:
 E = Σ(Si · φ · sin(θi) · Ψi) / n
 Where:
