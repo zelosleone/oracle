@@ -274,6 +274,10 @@ async function askOracleMultipleTimes() {
         processLog.innerHTML += '<p>Randomizing answer positions...</p>';
         const shuffledAnswers = await shuffleAnswers(answers);
         
+        if (!shuffledAnswers || shuffledAnswers.length === 0) {
+            throw new Error('No valid answers to process');
+        }
+
         processLog.innerHTML += '<p>Calculating quantum-enhanced pentagram energies...</p>';
         const pentagramEnergy = await calculatePentagramEnergy();
         const quantumInfluence = calculateQuantumFluctuation(pentagramEnergy);
@@ -308,7 +312,7 @@ async function askOracleMultipleTimes() {
         }
 
         const mostFrequentAnswer = Object.entries(answerCounts)
-            .reduce((a, b) => a[1] > b[1] ? a : b)[0];
+            .reduce((a, b) => a[1] > b[1] ? a : b, [shuffledAnswers[0], 0])[0];
         const frequency = answerCounts[mostFrequentAnswer];
         const percentage = ((frequency / totalRuns) * 100).toFixed(2);
 
@@ -335,8 +339,8 @@ async function askOracleMultipleTimes() {
     } catch (error) {
         console.error('Error during oracle consultation:', error);
         document.getElementById('error-message').textContent = 
-            'The oracle requires true randomness from Random.org to function. ' +
-            'Please try again when the connection to the cosmic forces is restored.';
+            'The oracle is currently unable to process your request. ' +
+            'Please try again with different answers.';
         document.getElementById('error-message').style.display = 'block';
     } finally {
         document.getElementById('loading').style.display = 'none';
