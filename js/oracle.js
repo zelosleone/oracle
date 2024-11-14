@@ -296,19 +296,27 @@ async function askOracleMultipleTimes() {
             const waveComponent = applyWaveFunction(pentagramEnergy, quantumPhase);
             const complexityIndex = calculateComplexityIndex([pentagramEnergy, quantumInfluence, waveComponent]);
             
-            const energyInfluencedIndex = Math.floor(
-                (randomNumber[0] * pentagramEnergy + waveComponent * quantumInfluence) * 
-                complexityIndex
-            ) % shuffledAnswers.length;
-            
-            const answer = shuffledAnswers[energyInfluencedIndex];
-            answerCounts[answer] = (answerCounts[answer] || 0) + 1;
+            const energyValue = (randomNumber[0] * pentagramEnergy + waveComponent * quantumInfluence) * complexityIndex;
+            const energyInfluencedIndex = Math.floor(energyValue) % shuffledAnswers.length;
+
+            // Validate energyInfluencedIndex
+            if (energyInfluencedIndex >= 0 && energyInfluencedIndex < shuffledAnswers.length) {
+                const answer = shuffledAnswers[energyInfluencedIndex];
+                answerCounts[answer] = (answerCounts[answer] || 0) + 1;
+            } else {
+                console.warn(`Invalid energyInfluencedIndex: ${energyInfluencedIndex}`);
+            }
             
             if (i < 9) {
-                processLog.innerHTML += `<p>Run ${i + 1}: ${answer}</p>`;
+                processLog.innerHTML += `<p>Run ${i + 1}: ${shuffledAnswers[energyInfluencedIndex]}</p>`;
             } else if (i === 9) {
                 processLog.innerHTML += "<p>...</p>";
             }
+        }
+
+        // Ensure answerCounts is not empty before reducing
+        if (Object.keys(answerCounts).length === 0) {
+            throw new Error('No answers were generated. Please try again.');
         }
 
         const mostFrequentAnswer = Object.entries(answerCounts)
