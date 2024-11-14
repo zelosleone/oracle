@@ -104,7 +104,9 @@ window.addEventListener('mouseup', stopDrawing);
 
 async function getRandomNumbers(min, max, count) {
     if (min >= max) {
-        throw new Error("Parameter 'min' must be less than parameter 'max'");
+        // Fallback to local random if parameters are invalid
+        return Array.from({length: count}, () => 
+            Math.floor(Math.random() * (max - min + 1)) + min);
     }
 
     try {
@@ -133,14 +135,16 @@ async function getRandomNumbers(min, max, count) {
 
         const data = await response.json();
         
-        if (data.error) {
-            throw new Error(data.error.message);
+        if (data.error || !data.result?.random?.data) {
+            throw new Error(data.error?.message || 'Invalid response from Random.org');
         }
 
         return data.result.random.data;
     } catch (error) {
-        console.error('Random.org API Error:', error);
-        throw new Error('Could not obtain true randomness from Random.org. Please try again later.');
+        console.warn('Falling back to local random number generation:', error);
+        // Fallback to local random number generation
+        return Array.from({length: count}, () => 
+            Math.floor(Math.random() * (max - min + 1)) + min);
     }
 }
 
@@ -252,6 +256,7 @@ async function calculatePentagramEnergy(min = 1, max = 100) {
 async function askOracleMultipleTimes() {
     const answersInput = document.getElementById('answers-input').value.trim();
     const processLog = document.getElementById('process-log');
+    const errorElement = document.getElementById('error-message');
     
     if (answersInput === '' || canvas.toDataURL() === document.createElement('canvas').toDataURL()) {
         alert('Please enter both answers and paint your question.');
@@ -267,10 +272,15 @@ async function askOracleMultipleTimes() {
     document.getElementById('loading').style.display = 'block';
     document.getElementById('result').textContent = '';
     document.getElementById('user-question').textContent = '';
-    document.getElementById('error-message').style.display = 'none';
+    if (errorElement) errorElement.style.display = 'none';
     processLog.innerHTML = '<h3>Oracle Consultation Log</h3>';
 
     try {
+        // Initialize with a default answer in case of errors
+        let currentAnswer = answers[0];
+        const answerCounts = {};
+        answers.forEach(answer => answerCounts[answer] = 0);
+
         processLog.innerHTML += '<p>Randomizing answer positions...</p>';
         const shuffledAnswers = await shuffleAnswers(answers);
         
@@ -285,42 +295,48 @@ async function askOracleMultipleTimes() {
         processLog.innerHTML += `<p>Pentagram energy level: ${(pentagramEnergy * 100).toFixed(2)}%</p>`;
         processLog.innerHTML += `<p>Quantum influence: ${(quantumInfluence * 100).toFixed(2)}%</p>`;
 
-        const answerCounts = {};
         const baseRuns = shuffledAnswers.length === 2 ? 9 : getNextPrime(9 * shuffledAnswers.length);
         const totalRuns = Math.max(baseRuns, Math.floor(baseRuns * (pentagramEnergy + quantumInfluence) / 2));
 
         for (let i = 0; i < totalRuns; i++) {
-            // Enhanced weight calculation using quantum influence
-            const randomNumber = await getRandomNumbers(0, Math.max(0, shuffledAnswers.length - 1), 1);
-            const quantumPhase = Math.sin(2 * Math.PI * i / totalRuns);
-            const waveComponent = applyWaveFunction(pentagramEnergy, quantumPhase);
-            const complexityIndex = calculateComplexityIndex([pentagramEnergy, quantumInfluence, waveComponent]);
-            
-            const energyValue = (randomNumber[0] * pentagramEnergy + waveComponent * quantumInfluence) * complexityIndex;
-            const energyInfluencedIndex = Math.floor(energyValue) % shuffledAnswers.length;
-
-            // Validate energyInfluencedIndex
-            if (energyInfluencedIndex >= 0 && energyInfluencedIndex < shuffledAnswers.length) {
-                const answer = shuffledAnswers[energyInfluencedIndex];
-                answerCounts[answer] = (answerCounts[answer] || 0) + 1;
-            } else {
-                console.warn(`Invalid energyInfluencedIndex: ${energyInfluencedIndex}`);
-            }
-            
-            if (i < 9) {
-                processLog.innerHTML += `<p>Run ${i + 1}: ${shuffledAnswers[energyInfluencedIndex]}</p>`;
-            } else if (i === 9) {
-                processLog.innerHTML += "<p>...</p>";
+            try {
+                const randomNumber = await getRandomNumbers(0, Math.max(0, shuffledAnswers.length - 1), 1);
+                const quantumPhase = Math.sin(2 * Math.PI * i / totalRuns);
+                const waveComponent = applyWaveFunction(pentagramEnergy || 0.5, quantumPhase);
+                const complexityIndex = calculateComplexityIndex([
+                    pentagramEnergy || 0.5, 
+                    quantumInfluence || 0.5, 
+                    waveComponent || 0.5
+                ]);
+                
+                const energyValue = ((randomNumber[0] || 0) * (pentagramEnergy || 0.5) + 
+                    (waveComponent || 0.5) * (quantumInfluence || 0.5)) * 
+                    (complexityIndex || 1);
+                
+                const energyInfluencedIndex = Math.abs(Math.floor(energyValue)) % shuffledAnswers.length;
+                currentAnswer = shuffledAnswers[energyInfluencedIndex];
+                answerCounts[currentAnswer] = (answerCounts[currentAnswer] || 0) + 1;
+                
+                if (i < 9) {
+                    processLog.innerHTML += `<p>Run ${i + 1}: ${currentAnswer}</p>`;
+                } else if (i === 9) {
+                    processLog.innerHTML += "<p>...</p>";
+                }
+            } catch (iterError) {
+                console.warn('Error in iteration:', iterError);
+                // Use current answer as fallback
+                answerCounts[currentAnswer] = (answerCounts[currentAnswer] || 0) + 1;
             }
         }
 
-        // Ensure answerCounts is not empty before reducing
-        if (Object.keys(answerCounts).length === 0) {
-            throw new Error('No answers were generated. Please try again.');
+        // Ensure we have some results
+        if (Object.values(answerCounts).every(count => count === 0)) {
+            throw new Error('No valid results generated');
         }
 
         const mostFrequentAnswer = Object.entries(answerCounts)
-            .reduce((a, b) => a[1] > b[1] ? a : b, [shuffledAnswers[0], 0])[0];
+            .reduce((a, b) => (a[1] >= (b[1] || 0) ? a : b), [answers[0], 0])[0];
+
         const frequency = answerCounts[mostFrequentAnswer];
         const percentage = ((frequency / totalRuns) * 100).toFixed(2);
 
@@ -346,10 +362,12 @@ async function askOracleMultipleTimes() {
 
     } catch (error) {
         console.error('Error during oracle consultation:', error);
-        document.getElementById('error-message').textContent = 
-            'The oracle is currently unable to process your request. ' +
-            'Please try again with different answers.';
-        document.getElementById('error-message').style.display = 'block';
+        if (errorElement) {
+            errorElement.textContent = 
+                'The oracle encountered an issue but will try again. ' +
+                'Please wait a moment and try once more.';
+            errorElement.style.display = 'block';
+        }
     } finally {
         document.getElementById('loading').style.display = 'none';
     }
