@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f5f9ff;
+  --foreground: #1a2942;
+  --celestial: #4f9dff;
+  --celestial-dark: #2d5c99;
+  --scroll: #e8f1ff;
+  --azure: #007acc;
+  --sacred: #34b3b3;
+  --lapis: #20619b;
+  --papyrus: #f5f9ff;
+  --hermetic-border: #5f89b3;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a1525;
+    --foreground: #e8f1ff;
+    --scroll: #152238;
+    --celestial: #1d3d66;
+    --sacred: #1a5757;
+    --azure: #005c99;
+    --papyrus: #0a1525;
+    --hermetic-border: #2d5c99;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+    background-image: radial-gradient(var(--sand) 1px, transparent 0);
+    background-size: 38px 38px;
+  }
+}
+
+@layer components {
+  .bg-papyrus {
+    background-color: var(--papyrus);
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5z' fill='%234f9dff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+  }
+
+  .bg-scroll {
+    background-color: var(--scroll);
+  }
+
+  .bg-gold {
+    background-color: var(--gold);
+  }
+
+  .bg-gold-dark {
+    background-color: var(--gold-dark);
+  }
+
+  .border-gold {
+    border-color: var(--gold);
+  }
+
+  .text-hieroglyph {
+    color: var(--foreground);
+  }
+
+  .hermetic-border {
+    position: relative;
+    border: 2px solid var(--gold);
+  }
+
+  .hermetic-border::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border: 1px solid var(--hermetic-border);
+    opacity: 0.5;
+  }
+
+  .mystic-input {
+    @apply bg-scroll border-2 border-celestial rounded transition-all duration-300;
+    box-shadow: 0 0 0 1px var(--hermetic-border);
+  }
+
+  .mystic-input:focus {
+    @apply outline-none;
+    box-shadow: 0 0 10px var(--azure);
+  }
+
+  .oracle-button {
+    @apply bg-celestial text-papyrus rounded transition-all duration-500;
+    background: linear-gradient(45deg, var(--sacred), var(--azure));
+  }
+
+  .oracle-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  }
+
+  .oracle-button:disabled {
+    opacity: 0.7;
+  }
+
+  .divine-result {
+    @apply p-6 bg-scroll rounded text-center;
+    border: 2px solid var(--gold);
+    animation: revealOracle 0.8s ease-out;
+  }
+
+  .divine-result::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border: 1px solid var(--hermetic-border);
+    opacity: 0.5;
+  }
+
+  .solar-glow {
+    position: relative;
+  }
+
+  .solar-glow::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    background: radial-gradient(circle at center, var(--gold) 0%, transparent 70%);
+    opacity: 0.1;
+    z-index: -1;
+  }
+
+  .mystical-text {
+    position: relative;
+  }
+
+  .mystical-text::before {
+    content: '';
+    position: absolute;
+    inset: -1rem;
+    background: radial-gradient(circle at center, var(--azure) 0%, transparent 70%);
+    opacity: 0.05;
+    z-index: -1;
+  }
+
+  .prayer-greek {
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+    text-shadow: 0 0 20px var(--celestial);
+  }
+
+  .prayer-hebrew {
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+    text-shadow: 0 0 20px var(--sacred);
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 0.6; }
+  }
+
+  .mystical-text p {
+    animation: glowPulse 4s ease-in-out infinite;
+  }
+
+  @keyframes revealOracle {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
