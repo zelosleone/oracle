@@ -30,23 +30,15 @@ export default function Home() {
       await recitePrayer('hebrew');
 
       const max = answerArray.length - 1;
-      const [shuffleResponse, selectionResponse] = await Promise.all([
-        fetch(`/api/random?min=0&max=${max}`),
-        fetch(`/api/random?min=0&max=${max}`)
-      ]);
+      const selectionResponse = await fetch(`/api/random?min=0&max=${max}`);
 
-      if (!shuffleResponse.ok || !selectionResponse.ok) {
-        throw new Error('Failed to fetch random numbers');
+      if (!selectionResponse.ok) {
+        throw new Error('Failed to fetch random number');
       }
 
-      const [shuffleSeed, selectionIndex] = await Promise.all([
-        shuffleResponse.json(),
-        selectionResponse.json()
-      ]);
-
+      const selectionIndex = await selectionResponse.json();
       const shuffledAnswers = shuffleArray([...answerArray]);
-      const selectedIndex = selectionIndex;
-      setResult(shuffledAnswers[selectedIndex]);
+      setResult(shuffledAnswers[selectionIndex]);
     } catch (error) {
       console.error('Error during revealAnswer:', error);
       setError('Failed to consult the Oracle. Please try again.');
