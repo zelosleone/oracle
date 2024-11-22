@@ -14,10 +14,15 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Divine Oracle",
+  title: "Oracle",
   description: "A mystical oracle for divine guidance",
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      {
+        url: '/favicon.ico',
+        sizes: 'any',
+      },
+    ],
   },
 };
 
