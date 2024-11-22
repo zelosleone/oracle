@@ -97,14 +97,14 @@ export default function Home() {
             {loading ? 'Consulting the Oracle...' : 'Reveal Me The Truth'}
           </button>
           {error && (
-            <div className="text-red-500">
+            <div className="text-red-500" role="alert">
               {error}
             </div>
           )}
         </div>
 
         {result && (
-          <div className="divine-result">
+          <div className="divine-result" role="status" aria-live="polite">
             <h2 className="text-2xl mb-2 text-terracotta">The Oracle Speaks:</h2>
             <p className="text-xl">{result}</p>
           </div>
