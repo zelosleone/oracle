@@ -9,38 +9,46 @@ export default function Home() {
   const [answers, setAnswers] = useState('');
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const revealAnswer = async () => {
+    if (!question.trim()) {
+      alert('Please enter a question');
+      return;
+    }
+    const answerArray = answers.split('\n').filter(a => a.trim());
+    if (answerArray.length < 2) {
+      alert('Please enter at least two possible answers');
+      return;
+    }
+
     setLoading(true);
+    setError(null);
     try {
-      // Recite prayers before randomization
       await recitePrayer('greek');
       await recitePrayer('hebrew');
 
-      const answerArray = answers.split('\n').filter(a => a.trim());
-      if (answerArray.length === 0) {
-        alert('Please enter at least one answer');
-        return;
-      }
-      
-      // Get two random numbers from Random.org
       const max = answerArray.length - 1;
       const [shuffleResponse, selectionResponse] = await Promise.all([
         fetch(`/api/random?min=0&max=${max}`),
         fetch(`/api/random?min=0&max=${max}`)
       ]);
-      
+
+      if (!shuffleResponse.ok || !selectionResponse.ok) {
+        throw new Error('Failed to fetch random numbers');
+      }
+
       const [shuffleSeed, selectionIndex] = await Promise.all([
         shuffleResponse.json(),
         selectionResponse.json()
       ]);
-      
-      // Shuffle answers using Fisher-Yates with Random.org seed
+
       const shuffledAnswers = shuffleArray([...answerArray], shuffleSeed);
-      
-      // Use second random number for final selection
       const selectedIndex = selectionIndex;
       setResult(shuffledAnswers[selectedIndex]);
+    } catch (error) {
+      console.error('Error during revealAnswer:', error);
+      setError('Failed to consult the Oracle. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -96,6 +104,11 @@ export default function Home() {
           >
             {loading ? 'Consulting the Oracle...' : 'Reveal Me The Truth'}
           </button>
+          {error && (
+            <div className="text-red-500">
+              {error}
+            </div>
+          )}
         </div>
 
         {result && (
