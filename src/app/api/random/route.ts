@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const randomNumber = await response.text();
     return NextResponse.json(parseInt(randomNumber.trim()));
   } catch (error) {
-    // Fallback to Math.random() if Random.org fails
+    console.warn('Random.org API failed:', error);
     const randomNumber = Math.floor(Math.random() * (parseInt(max) - parseInt(min) + 1)) + parseInt(min);
     return NextResponse.json(randomNumber);
   }
