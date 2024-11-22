@@ -1,11 +1,12 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { shuffleArray } from '@/utils/shuffle';
 import { recitePrayer } from '@/utils/prayers';
 
 export default function Home() {
+  const mainRef = useRef<HTMLDivElement>(null);
   const [question, setQuestion] = useState('');
   const [answers, setAnswers] = useState('');
   const [result, setResult] = useState<string | null>(null);
@@ -39,6 +40,12 @@ export default function Home() {
       const selectionIndex = await selectionResponse.json();
       const shuffledAnswers = shuffleArray([...answerArray]);
       setResult(shuffledAnswers[selectionIndex]);
+      
+      // Reset focus to main container after result is shown
+      setTimeout(() => {
+        mainRef.current?.focus();
+        mainRef.current?.removeAttribute('tabindex');
+      }, 100);
     } catch (error) {
       console.error('Error during revealAnswer:', error);
       setError('Failed to consult the Oracle. Please try again.');
@@ -48,7 +55,12 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-papyrus text-hieroglyph p-8">
+    <div 
+      className="min-h-screen bg-papyrus text-hieroglyph p-8"
+      ref={mainRef}
+      // Only add tabIndex when needed for focus management
+      tabIndex={loading ? -1 : undefined}
+    >
       <main className="max-w-2xl mx-auto space-y-8">
         <div className="relative w-[100px] h-[100px] mx-auto">
           <Image 
