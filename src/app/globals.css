@@ -103,14 +103,27 @@
     @apply p-6 bg-scroll rounded text-center;
     border: 2px solid var(--gold);
     animation: revealOracle 0.8s ease-out;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.5rem;
+    position: relative;
+    user-select: text;
+    pointer-events: auto;
   }
 
-  .divine-result::before {
+  .divine-result::before,
+  .divine-result::after {
     content: '';
     position: absolute;
-    inset: -4px;
-    border: 1px solid var(--hermetic-border);
-    opacity: 0.5;
+    inset: 0;
+    border-radius: 0.5rem;
+    padding: 2px;
+    background: linear-gradient(45deg, var(--color-gold), var(--color-terracotta));
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
   }
 
   .solar-glow {
