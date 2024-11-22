@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { shuffleArray } from '@/utils/shuffle';
 import { recitePrayer } from '@/utils/prayers';
@@ -57,15 +58,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-papyrus text-hieroglyph p-8">
       <main className="max-w-2xl mx-auto space-y-8">
-        {/* Logo image - aspect ratio 4.74:1 */}
-        <img 
-          src="/talisman.png" 
-          alt="Divine Oracle Talisman" 
-          width={100} 
-          height={100} 
-          className="mx-auto animate-float solar-glow"
-          style={{ height: 'auto' }}
-        />
+        <div className="relative w-[100px] h-[100px] mx-auto">
+          <Image 
+            src="/talisman.png" 
+            alt="Divine Oracle Talisman" 
+            fill
+            className="animate-float solar-glow object-contain"
+          />
+        </div>
         <h1 className="text-4xl text-center font-hieroglyph bg-clip-text text-transparent bg-gradient-to-r from-gold-dark to-gold">
           Divine Oracle
         </h1>
