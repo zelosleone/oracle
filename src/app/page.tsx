@@ -104,9 +104,9 @@ export default function Home() {
         </div>
 
         {result && (
-          <div className="divine-result" role="status" aria-live="polite">
+          <div className="divine-result">
             <h2 className="text-2xl mb-2 text-terracotta">The Oracle Speaks:</h2>
-            <p className="text-xl">{result}</p>
+            <p className="text-xl select-text">{result}</p>
           </div>
         )}
       </main>
