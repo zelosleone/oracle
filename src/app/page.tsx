@@ -44,7 +44,7 @@ export default function Home() {
         selectionResponse.json()
       ]);
 
-      const shuffledAnswers = shuffleArray([...answerArray], shuffleSeed);
+      const shuffledAnswers = shuffleArray([...answerArray]);
       const selectedIndex = selectionIndex;
       setResult(shuffledAnswers[selectedIndex]);
     } catch (error) {
