@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Divine Oracle
 
-## Getting Started
+## Mathematical Implementation
 
-First, run the development server:
+### Randomization Algorithm
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+The oracle uses a dual-source entropy system for decision making:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. **Primary Entropy Source**: True random numbers from Random.org's atmospheric noise
+   - Quantum randomization via `/api/random` endpoint
+   - Range: [0, n-1] where n = number of possible answers
+   - Entropy source: atmospheric noise
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+2. **Secondary Entropy (Fallback)**: Fisher-Yates shuffle implementation
+   ```typescript
+   P(permutation) = 1/n!
+   where n = array.length
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Probability Distribution
 
-## Learn More
+For n possible answers:
+- Initial probability per answer: P(x) = 1/n
+- Post-shuffle entropy: H = -∑(p_i * log₂(p_i)) = log₂(n!
+- Uniform distribution maintained through bijective mapping
 
-To learn more about Next.js, take a look at the following resources:
+## Cryptographic Considerations
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Entropy Sources
+1. Random.org API: ~7-8 bits of entropy per request
+2. Fallback PRNG: Math.random() (~32 bits)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Security Boundaries
+- Non-predictable outcome: O(n!) possible permutations
+- Timing attacks mitigated via Promise.all() implementation
+- Network failure graceful degradation to PRNG
 
-## Deploy on Vercel
+## Implementation Details
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Speech Synthesis
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Dual-language prayer system using Web Speech API
+- Language configurations:
+  - Greek (el-GR): Ancient Greek incantations
+  - Hebrew (he-IL): Kabbalistic prayers
+- Fallback handling for non-supporting browsers
+
+### Accessibility Features
+
+#### ARIA Attributes
+- Dynamic state management for loading states
+- Screen reader optimizations for oracle responses
+- RTL/LTR text direction support for prayers
+
+#### Keyboard Navigation
+- Full keyboard support for all interactive elements
+- Focus management during oracle consultation
+- Loading state indicators
+
+## Deployment
+
+### Environmental Requirements
+- Node.js 18.0.0+
+- Next.js 13.5+
+- Vercel hosting recommended
