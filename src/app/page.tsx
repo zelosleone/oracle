@@ -32,8 +32,8 @@ export default function Home() {
     setLoading(true);
     setError(null);
     try {
-      await recitePrayer('greek', volume);
-      await recitePrayer('hebrew', volume);
+      await recitePrayer('greek');
+      await recitePrayer('hebrew');
 
       const max = answerArray.length - 1;
       const selectionResponse = await fetch(`/api/random?min=0&max=${max}`);
