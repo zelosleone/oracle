@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { shuffleArray } from '@/utils/shuffle';
-import { recitePrayer } from '@/utils/prayers';
+import { recitePrayer, updateSpeechVolume } from '@/utils/prayers';
 
 export default function Home() {
   const [question, setQuestion] = useState('');
@@ -12,6 +12,11 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [volume, setVolume] = useState(0.8);
+
+  const handleVolumeChange = (newVolume: number) => {
+    setVolume(newVolume);
+    updateSpeechVolume(newVolume);
+  };
 
   const revealAnswer = async () => {
     if (!question.trim()) {
@@ -119,7 +124,7 @@ export default function Home() {
           max="1"
           step="0.1"
           value={volume}
-          onChange={(e) => setVolume(Number(e.target.value))}
+          onChange={(e) => handleVolumeChange(Number(e.target.value))}
           className="w-24 accent-sacred"
         />
       </div>
