@@ -6,7 +6,6 @@ const PRAYERS = {
 let currentUtterance: SpeechSynthesisUtterance | null = null;
 let currentVolume = 0.8;
 let currentResolve: (() => void) | null = null;
-let currentReject: ((error: any) => void) | null = null;
 
 export function updateSpeechVolume(volume: number) {
   currentVolume = volume;
@@ -56,24 +55,21 @@ export async function recitePrayer(type: keyof typeof PRAYERS) {
     
     currentUtterance = utterance;
     
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       currentResolve = resolve;
-      currentReject = reject;
       
       utterance.onend = () => {
         if (currentResolve === resolve) { // Only resolve if this is the final utterance
           currentUtterance = null;
           currentResolve = null;
-          currentReject = null;
-          resolve(undefined);
+          resolve();
         }
       };
       
-      utterance.onerror = (e) => {
+      utterance.onerror = (event: SpeechSynthesisErrorEvent) => {
         currentUtterance = null;
         currentResolve = null;
-        currentReject = null;
-        reject(e);
+        reject(new Error(`Speech synthesis failed: ${event.error}`));
       };
       
       window.speechSynthesis.speak(utterance);
