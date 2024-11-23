@@ -5,20 +5,20 @@ const PRAYERS = {
 
 interface SpeechState {
   activeUtterances: SpeechSynthesisUtterance[];
-  startVolume: number;
+  isMuted: boolean;
 }
 
 const speechState: SpeechState = {
   activeUtterances: [],
-  startVolume: 0.8
+  isMuted: false
 };
 
 export function updateSpeechVolume(volume: number) {
-  speechState.startVolume = volume;
+  const isMuted = volume === 0;
+  speechState.isMuted = isMuted;
   
-  // Update all active utterances immediately
   speechState.activeUtterances.forEach(utterance => {
-    utterance.volume = volume;
+    utterance.volume = isMuted ? 0 : 1;
   });
 }
 
@@ -34,7 +34,7 @@ export async function recitePrayer(type: keyof typeof PRAYERS) {
     const utterance = new SpeechSynthesisUtterance(PRAYERS[type]);
     utterance.lang = type === 'greek' ? 'el-GR' : 'he-IL';
     utterance.rate = 0.8;
-    utterance.volume = speechState.startVolume;
+    utterance.volume = speechState.isMuted ? 0 : 1;
     
     // Try to find appropriate voice
     const voices = speechSynthesis.getVoices();
@@ -69,7 +69,7 @@ export async function recitePrayer(type: keyof typeof PRAYERS) {
 
     // Add volume change handler
     utterance.addEventListener('volumechange', () => {
-      utterance.volume = speechState.startVolume;
+      utterance.volume = speechState.isMuted ? 0 : 1;
     });
     
     window.speechSynthesis.speak(utterance);
