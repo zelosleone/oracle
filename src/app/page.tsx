@@ -11,11 +11,12 @@ export default function Home() {
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [volume, setVolume] = useState(0.8);
+  const [isMuted, setIsMuted] = useState(false);
 
-  const handleVolumeChange = (newVolume: number) => {
-    setVolume(newVolume);
-    updateSpeechVolume(newVolume);
+  const toggleMute = () => {
+    const newMuted = !isMuted;
+    setIsMuted(newMuted);
+    updateSpeechVolume(newMuted ? 0 : 1);
   };
 
   const revealAnswer = async () => {
@@ -117,16 +118,12 @@ export default function Home() {
         )}
       </main>
       <div className="fixed bottom-4 right-4 flex items-center gap-2 bg-scroll/80 p-2 rounded-lg">
-        <span className="text-sm opacity-70">🔊</span>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.1"
-          value={volume}
-          onChange={(e) => handleVolumeChange(Number(e.target.value))}
-          className="w-24 accent-sacred"
-        />
+        <button
+          onClick={toggleMute}
+          className="p-2 hover:opacity-80"
+        >
+          {isMuted ? '🔇' : '🔊'}
+        </button>
       </div>
     </div>
   );
