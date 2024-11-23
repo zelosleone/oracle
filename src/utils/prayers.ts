@@ -5,17 +5,29 @@ const PRAYERS = {
 
 let currentUtterance: SpeechSynthesisUtterance | null = null;
 let currentVolume = 0.8;
+let currentResolve: (() => void) | null = null;
+let currentReject: ((error: any) => void) | null = null;
 
 export function updateSpeechVolume(volume: number) {
   currentVolume = volume;
   if (currentUtterance) {
-    currentUtterance.volume = volume;
+    // Stop current speech
+    window.speechSynthesis.cancel();
     
-    // Force the speech synthesis to recognize the volume change
-    if (window.speechSynthesis.speaking) {
-      window.speechSynthesis.pause();
-      window.speechSynthesis.resume();
-    }
+    // Create new utterance with updated volume
+    const newUtterance = new SpeechSynthesisUtterance(currentUtterance.text);
+    newUtterance.lang = currentUtterance.lang;
+    newUtterance.rate = currentUtterance.rate;
+    newUtterance.volume = volume;
+    newUtterance.voice = currentUtterance.voice;
+    
+    // Transfer the completion handlers
+    newUtterance.onend = currentUtterance.onend;
+    newUtterance.onerror = currentUtterance.onerror;
+    
+    // Replace current utterance
+    currentUtterance = newUtterance;
+    window.speechSynthesis.speak(newUtterance);
   }
 }
 
@@ -23,24 +35,48 @@ export async function recitePrayer(type: keyof typeof PRAYERS) {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
     
+    // Wait for voices to be loaded
+    if (speechSynthesis.getVoices().length === 0) {
+      await new Promise<void>(resolve => {
+        speechSynthesis.onvoiceschanged = () => resolve();
+      });
+    }
+    
     const utterance = new SpeechSynthesisUtterance(PRAYERS[type]);
     utterance.lang = type === 'greek' ? 'el-GR' : 'he-IL';
     utterance.rate = 0.8;
     utterance.volume = currentVolume;
     
+    // Try to find appropriate voice
+    const voices = speechSynthesis.getVoices();
+    const preferredVoice = voices.find(voice => voice.lang.startsWith(utterance.lang));
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+    
     currentUtterance = utterance;
     
-    window.speechSynthesis.speak(utterance);
-    
     return new Promise((resolve, reject) => {
+      currentResolve = resolve;
+      currentReject = reject;
+      
       utterance.onend = () => {
-        currentUtterance = null;
-        resolve(undefined);
+        if (currentResolve === resolve) { // Only resolve if this is the final utterance
+          currentUtterance = null;
+          currentResolve = null;
+          currentReject = null;
+          resolve(undefined);
+        }
       };
+      
       utterance.onerror = (e) => {
         currentUtterance = null;
+        currentResolve = null;
+        currentReject = null;
         reject(e);
       };
+      
+      window.speechSynthesis.speak(utterance);
     });
   } else {
     console.warn('Speech synthesis not supported in this browser.');
