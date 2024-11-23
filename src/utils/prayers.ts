@@ -4,22 +4,27 @@ const PRAYERS = {
 };
 
 interface SpeechState {
-  utterance: SpeechSynthesisUtterance | null;
+  activeUtterances: SpeechSynthesisUtterance[];
   startVolume: number;
 }
 
 const speechState: SpeechState = {
-  utterance: null,
+  activeUtterances: [],
   startVolume: 0.8
 };
 
 export function updateSpeechVolume(volume: number) {
   speechState.startVolume = volume;
   
-  if (speechState.utterance && window.speechSynthesis.speaking) {
-    // Update volume in real-time without recreating utterance
-    speechState.utterance.volume = volume;
-  }
+  // Update all active utterances immediately
+  speechState.activeUtterances.forEach(utterance => {
+    // Direct volume manipulation
+    utterance.volume = volume;
+    
+    // Ensure the change takes effect
+    const event = new Event('volumechange');
+    utterance.dispatchEvent(event);
+  });
 }
 
 export async function recitePrayer(type: keyof typeof PRAYERS) {
@@ -45,24 +50,38 @@ export async function recitePrayer(type: keyof typeof PRAYERS) {
       utterance.voice = preferredVoice;
     }
     
-    // Add volume change monitoring
-    utterance.addEventListener('boundary', () => {
-      if (utterance.volume !== speechState.startVolume) {
-        utterance.volume = speechState.startVolume;
+    // Track this utterance
+    speechState.activeUtterances.push(utterance);
+    
+    // Add volume control listeners
+    utterance.addEventListener('start', () => {
+      if (!speechState.activeUtterances.includes(utterance)) {
+        speechState.activeUtterances.push(utterance);
       }
     });
     
-    speechState.utterance = utterance;
+    utterance.addEventListener('end', () => {
+      const index = speechState.activeUtterances.indexOf(utterance);
+      if (index > -1) {
+        speechState.activeUtterances.splice(index, 1);
+      }
+    });
+    
+    utterance.addEventListener('error', () => {
+      const index = speechState.activeUtterances.indexOf(utterance);
+      if (index > -1) {
+        speechState.activeUtterances.splice(index, 1);
+      }
+    });
+    
     window.speechSynthesis.speak(utterance);
     
     return new Promise<void>((resolve, reject) => {
       utterance.onend = () => {
-        speechState.utterance = null;
         resolve();
       };
       
       utterance.onerror = (event: SpeechSynthesisErrorEvent) => {
-        speechState.utterance = null;
         reject(new Error(`Speech synthesis failed: ${event.error}`));
       };
     });
