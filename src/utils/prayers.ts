@@ -3,16 +3,29 @@ const PRAYERS = {
   hebrew: 'הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים'
 };
 
+let currentUtterance: SpeechSynthesisUtterance | null = null;
+
+export function updateSpeechVolume(volume: number) {
+  if (currentUtterance) {
+    currentUtterance.volume = volume;
+  }
+}
+
 export async function recitePrayer(type: keyof typeof PRAYERS, volume: number = 0.8) {
   if ('speechSynthesis' in window) {
     const utterance = new SpeechSynthesisUtterance(PRAYERS[type]);
     utterance.lang = type === 'greek' ? 'el-GR' : 'he-IL';
     utterance.rate = 0.8;
     utterance.volume = volume;
+    
+    currentUtterance = utterance;
     window.speechSynthesis.speak(utterance);
     
     return new Promise((resolve, reject) => {
-      utterance.onend = resolve;
+      utterance.onend = () => {
+        currentUtterance = null;
+        resolve(undefined);
+      };
       utterance.onerror = reject;
     });
   } else {
