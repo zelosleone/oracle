@@ -18,19 +18,12 @@ export function updateSpeechVolume(volume: number) {
   
   // Update all active utterances immediately
   speechState.activeUtterances.forEach(utterance => {
-    // Direct volume manipulation
     utterance.volume = volume;
-    
-    // Ensure the change takes effect
-    const event = new Event('volumechange');
-    utterance.dispatchEvent(event);
   });
 }
 
 export async function recitePrayer(type: keyof typeof PRAYERS) {
   if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    
     // Wait for voices to be loaded
     if (speechSynthesis.getVoices().length === 0) {
       await new Promise<void>(resolve => {
@@ -72,6 +65,11 @@ export async function recitePrayer(type: keyof typeof PRAYERS) {
       if (index > -1) {
         speechState.activeUtterances.splice(index, 1);
       }
+    });
+
+    // Add volume change handler
+    utterance.addEventListener('volumechange', () => {
+      utterance.volume = speechState.startVolume;
     });
     
     window.speechSynthesis.speak(utterance);
