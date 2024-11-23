@@ -58,7 +58,7 @@ export default function Home() {
             className="animate-float solar-glow object-contain"
           />
         </div>
-        <h1 className="text-4xl text-center font-hieroglyph bg-clip-text text-transparent bg-gradient-to-r from-gold-dark to-gold">
+        <h1 className="text-4xl text-center font-hieroglyph bg-clip-text text-transparent bg-gradient-to-r from-sacred to-celestial-dark drop-shadow-glow">
           Divine Oracle
         </h1>
         
