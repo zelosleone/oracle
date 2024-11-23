@@ -11,6 +11,7 @@ export default function Home() {
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [volume, setVolume] = useState(0.8);
 
   const revealAnswer = async () => {
     if (!question.trim()) {
@@ -26,8 +27,8 @@ export default function Home() {
     setLoading(true);
     setError(null);
     try {
-      await recitePrayer('greek');
-      await recitePrayer('hebrew');
+      await recitePrayer('greek', volume);
+      await recitePrayer('hebrew', volume);
 
       const max = answerArray.length - 1;
       const selectionResponse = await fetch(`/api/random?min=0&max=${max}`);
@@ -110,6 +111,18 @@ export default function Home() {
           </div>
         )}
       </main>
+      <div className="fixed bottom-4 right-4 flex items-center gap-2 bg-scroll/80 p-2 rounded-lg">
+        <span className="text-sm opacity-70">🔊</span>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.1"
+          value={volume}
+          onChange={(e) => setVolume(Number(e.target.value))}
+          className="w-24 accent-sacred"
+        />
+      </div>
     </div>
   );
 }
