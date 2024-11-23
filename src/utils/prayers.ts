@@ -3,30 +3,22 @@ const PRAYERS = {
   hebrew: 'הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים'
 };
 
-let currentUtterance: SpeechSynthesisUtterance | null = null;
-let currentVolume = 0.8;
-let currentResolve: (() => void) | null = null;
+interface SpeechState {
+  utterance: SpeechSynthesisUtterance | null;
+  startVolume: number;
+}
+
+const speechState: SpeechState = {
+  utterance: null,
+  startVolume: 0.8
+};
 
 export function updateSpeechVolume(volume: number) {
-  currentVolume = volume;
-  if (currentUtterance) {
-    // Stop current speech
-    window.speechSynthesis.cancel();
-    
-    // Create new utterance with updated volume
-    const newUtterance = new SpeechSynthesisUtterance(currentUtterance.text);
-    newUtterance.lang = currentUtterance.lang;
-    newUtterance.rate = currentUtterance.rate;
-    newUtterance.volume = volume;
-    newUtterance.voice = currentUtterance.voice;
-    
-    // Transfer the completion handlers
-    newUtterance.onend = currentUtterance.onend;
-    newUtterance.onerror = currentUtterance.onerror;
-    
-    // Replace current utterance
-    currentUtterance = newUtterance;
-    window.speechSynthesis.speak(newUtterance);
+  speechState.startVolume = volume;
+  
+  if (speechState.utterance && window.speechSynthesis.speaking) {
+    // Update volume in real-time without recreating utterance
+    speechState.utterance.volume = volume;
   }
 }
 
@@ -44,7 +36,7 @@ export async function recitePrayer(type: keyof typeof PRAYERS) {
     const utterance = new SpeechSynthesisUtterance(PRAYERS[type]);
     utterance.lang = type === 'greek' ? 'el-GR' : 'he-IL';
     utterance.rate = 0.8;
-    utterance.volume = currentVolume;
+    utterance.volume = speechState.startVolume;
     
     // Try to find appropriate voice
     const voices = speechSynthesis.getVoices();
@@ -53,26 +45,26 @@ export async function recitePrayer(type: keyof typeof PRAYERS) {
       utterance.voice = preferredVoice;
     }
     
-    currentUtterance = utterance;
+    // Add volume change monitoring
+    utterance.addEventListener('boundary', () => {
+      if (utterance.volume !== speechState.startVolume) {
+        utterance.volume = speechState.startVolume;
+      }
+    });
+    
+    speechState.utterance = utterance;
+    window.speechSynthesis.speak(utterance);
     
     return new Promise<void>((resolve, reject) => {
-      currentResolve = resolve;
-      
       utterance.onend = () => {
-        if (currentResolve === resolve) { // Only resolve if this is the final utterance
-          currentUtterance = null;
-          currentResolve = null;
-          resolve();
-        }
+        speechState.utterance = null;
+        resolve();
       };
       
       utterance.onerror = (event: SpeechSynthesisErrorEvent) => {
-        currentUtterance = null;
-        currentResolve = null;
+        speechState.utterance = null;
         reject(new Error(`Speech synthesis failed: ${event.error}`));
       };
-      
-      window.speechSynthesis.speak(utterance);
     });
   } else {
     console.warn('Speech synthesis not supported in this browser.');
