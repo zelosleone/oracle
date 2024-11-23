@@ -13,36 +13,47 @@ const speechState: SpeechState = {
   isPlaying: false
 };
 
+let currentUtterance: SpeechSynthesisUtterance | null = null;
+let currentVolume = 0.8;
+
 export function updateSpeechVolume(volume: number) {
-  if (speechState.utterance && speechState.isPlaying) {
-    speechState.utterance.volume = volume;
+  currentVolume = volume;
+  if (currentUtterance) {
+    currentUtterance.volume = volume;
+    
+    // Force the speech synthesis to recognize the volume change
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.pause();
+      window.speechSynthesis.resume();
+    }
   }
 }
 
 export async function recitePrayer(type: keyof typeof PRAYERS, volume: number = 0.8) {
   if ('speechSynthesis' in window) {
-    // Cancel any existing speech
     window.speechSynthesis.cancel();
     
     const utterance = new SpeechSynthesisUtterance(PRAYERS[type]);
     utterance.lang = type === 'greek' ? 'el-GR' : 'he-IL';
     utterance.rate = 0.8;
-    utterance.volume = volume;
+    utterance.volume = currentVolume; // Use the current volume setting
     
-    speechState.utterance = utterance;
-    speechState.isPlaying = true;
+    currentUtterance = utterance;
+    
+    // Add volume change handler
+    utterance.onboundary = () => {
+      utterance.volume = currentVolume;
+    };
     
     window.speechSynthesis.speak(utterance);
     
     return new Promise((resolve, reject) => {
       utterance.onend = () => {
-        speechState.isPlaying = false;
-        speechState.utterance = null;
+        currentUtterance = null;
         resolve(undefined);
       };
       utterance.onerror = (e) => {
-        speechState.isPlaying = false;
-        speechState.utterance = null;
+        currentUtterance = null;
         reject(e);
       };
     });
