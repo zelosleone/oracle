@@ -3,16 +3,6 @@ const PRAYERS = {
   hebrew: 'הכפף לי כל הדיימונים, למען ישמעו לי כל דיימון, בין בשמים או ברוח או בארץ או מתחת לארץ או ביבשה או במים, וכל קסם ונגע אשר מאת האלוהים'
 };
 
-interface SpeechState {
-  utterance: SpeechSynthesisUtterance | null;
-  isPlaying: boolean;
-}
-
-const speechState: SpeechState = {
-  utterance: null,
-  isPlaying: false
-};
-
 let currentUtterance: SpeechSynthesisUtterance | null = null;
 let currentVolume = 0.8;
 
@@ -29,21 +19,16 @@ export function updateSpeechVolume(volume: number) {
   }
 }
 
-export async function recitePrayer(type: keyof typeof PRAYERS, volume: number = 0.8) {
+export async function recitePrayer(type: keyof typeof PRAYERS) {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
     
     const utterance = new SpeechSynthesisUtterance(PRAYERS[type]);
     utterance.lang = type === 'greek' ? 'el-GR' : 'he-IL';
     utterance.rate = 0.8;
-    utterance.volume = currentVolume; // Use the current volume setting
+    utterance.volume = currentVolume;
     
     currentUtterance = utterance;
-    
-    // Add volume change handler
-    utterance.onboundary = () => {
-      utterance.volume = currentVolume;
-    };
     
     window.speechSynthesis.speak(utterance);
     
