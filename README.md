@@ -37,7 +37,7 @@ The application gracefully handles unsupported browsers, ensuring a basic level 
 
 *   Node.js 18.0.0+
 *   Next.js 13.5+
-*   Vercel hosting is recommended.  (Consider adding deployment instructions here)
+*   Vercel hosting is recommended.
 
 
 ## API Endpoints
@@ -46,13 +46,13 @@ The Divine Oracle utilizes a robust API for divination and data retrieval.
 
 GET /api/random
   - Retrieves a random number using a quantum entropy source and atmospheric noise integration.
-  - Range: \[0, n-1]  (Specify 'n' - the upper bound of the random number range)
+  - Range: \[0, n-1]
 
 POST /api/divination
-  - Parameters:  language (el-GR or he-IL),  (Add other relevant parameters such as prayer type, user input, etc.)
+  - Parameters:  language (el-GR or he-IL)
   - Synthesizes an appropriate prayer based on the selected language and parameters.
   - Calculates the divination result based on the random number and prayer context.
-  - Includes ritual timing information in the response. (Consider specifying response format - JSON?)
+  - Includes ritual timing information in the response.
 
 
 
